@@ -209,8 +209,9 @@ function migrate(s) {
   if (s.flags && s.flags.lowPerf === undefined) s.flags.lowPerf = false;
   if (!s.tokooren || typeof s.tokooren !== "object") s.tokooren = { bought: 0, broken: 0 };
   if (!s.trapmart || typeof s.trapmart !== "object") s.trapmart = { level: 1, auto: false, slots: [null, null, null] };
-  if (!s.slots || typeof s.slots !== "object") s.slots = { balance: 0, best: 0, rig: 0, _win: false, _big: false };
+  if (!s.slots || typeof s.slots !== "object") s.slots = { balance: 0, best: 0, rig: 0, bet: 1, _win: false, _big: false, _cost: 0, _sym: -1 };
   if (!s.flappy || typeof s.flappy !== "object") s.flappy = { best: 0 };
+  if (s.slots && s.slots.bet === undefined) s.slots.bet = 1;
   if (!s.cooldowns) s.cooldowns = {};
   if (!s.choiceHistory) s.choiceHistory = [];
   if (!s.notifications) s.notifications = [];

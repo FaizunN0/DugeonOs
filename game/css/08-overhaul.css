@@ -559,7 +559,13 @@ button .ico { width: 18px; height: 18px; flex: none; }
 .slot-msg { text-align: center; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; min-height: 18px; }
 .slot-msg.good { color: #3cff8c; font-weight: 700; }
 .slot-msg.bad { color: #ff8aa8; }
-.slot-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+ .slot-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+ .slot-bet { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
+ .slot-bet-label { font-size: 11px; color: var(--muted); margin-right: 2px; }
+ .bet-btn { padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-4); color: var(--text); font-size: 12px; font-weight: 800; cursor: pointer; }
+ .bet-btn.on { border-color: #FF4FD8; background: #ff4fd822; color: #ff8ae6; }
+ .bet-btn[data-bet="all"] { color: #ff8a8a; border-color: #ff6b6b66; }
+ .bet-btn.on[data-bet="all"] { background: #ff6b6b22; color: #ff8a8a; }
 
 /* ===================== BGM (jukebox) ===================== */
 .bgm-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
