@@ -1,0 +1,98 @@
+/* =========================================================
+   03 — PHONE FRAME / SCREEN / STATUS BAR / OVERLAYS
+   ========================================================= */
+#phone {
+  position: relative;
+  width: min(100%, var(--app-max));
+  height: min(880px, calc(100vh - 44px));
+  border-radius: 46px;
+  padding: 13px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.015)),
+    linear-gradient(180deg, var(--bg-3), var(--bg-1));
+  border: 1px solid var(--stroke-2);
+  box-shadow:
+    0 50px 130px rgba(0,0,0,0.65),
+    0 0 0 7px rgba(0,0,0,0.4),
+    0 0 0 9px rgba(199, 125, 255, 0.18),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* ambient glow blobs */
+.ambient {
+  position: absolute; inset: -25%; z-index: var(--z-ambient);
+  background:
+    radial-gradient(40% 40% at 18% 20%, rgba(168,85,247,0.28), transparent 70%),
+    radial-gradient(45% 45% at 85% 28%, rgba(255,79,216,0.22), transparent 70%),
+    radial-gradient(42% 42% at 60% 92%, rgba(52,231,228,0.18), transparent 70%);
+  filter: blur(16px);
+  animation: drift1 18s var(--ease-in-out) infinite;
+}
+.ambient .dot {
+  position: absolute; bottom: -12px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, #A855F7, #FF4FD8);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.7);
+  animation: floatUp linear infinite;
+}
+.grain {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.scanlines {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.18;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+
+/* sakura petal layer */
+.sakura { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.petal {
+  position: absolute; top: -8%;
+  width: 12px; height: 12px;
+  background: radial-gradient(circle at 30% 30%, #ffd1ec, #ff7ac6 60%, #ff4fd8);
+  border-radius: 12px 1px 12px 1px;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(255,122,198,0.6));
+  animation: petalFall linear infinite;
+}
+
+/* status bar */
+.status-bar {
+  position: relative; z-index: var(--z-content);
+  height: var(--status-h);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 16px;
+  font-size: 12px; color: var(--text-dim);
+}
+.sb-brand { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-brand); font-size: 12px; letter-spacing: 0.04em; color: var(--violet-3); }
+.sb-brand .mark { width: 15px; height: 15px; color: var(--magenta); }
+.sb-time { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
+.sb-chips { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.sb-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: var(--r-pill);
+  background: var(--glass); border: 1px solid var(--stroke); font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+}
+.sb-chip .ico { width: 13px; height: 13px; color: var(--amber); }
+.sb-chip.bell { color: var(--violet-3); position: relative; }
+.sb-chip.bell.has-unread { border-color: rgba(255,79,216,0.5); box-shadow: var(--glow-magenta); }
+.sb-chip.bell .ico { color: var(--violet-3); }
+.badge-dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+/* screen */
+.screen {
+  position: relative; z-index: var(--z-content);
+  height: calc(100% - var(--status-h));
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  border-radius: 32px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 30%),
+    linear-gradient(180deg, rgba(19,12,44,0.80), rgba(13,7,32,0.86));
+}
+
+/* whole-screen enter animation (transform/opacity safe) */
+.screen-anim { animation: screenIn 0.5s var(--ease-out) both; }
+.rise { animation: rise 0.5s var(--ease-out) both; }

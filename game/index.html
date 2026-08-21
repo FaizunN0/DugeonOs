@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id" class="dungeon-os anime">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <meta name="theme-color" content="#0a0612" />
+  <meta name="description" content="DungeonOS — Evil Management Suite. Kelola dungeon, hadapi mogok minion." />
+
+  <title>DungeonOS: Boss, Kami Mau Mogok!</title>
+
+  <!-- Fonts (online) — anime / fantasy vibe -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Yusei+Magic&family=Zen+Maru+Gothic:wght@400;500;700&family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Bungee&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- ============================================================
+       LIBRARY STACK (online) — 12 libs, all gracefully degraded.
+       gsap + canvas-confetti (existing) + 10 new:
+       anime.js, tsParticles, mo.js, html2canvas, vanilla-tilt,
+       rough.js, PixiJS, Matter.js, kute.js, Howler.
+       ============================================================ -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tsparticles/slim@3.4.0/tsparticles.slim.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@mojs/core@1.5.0/dist/mo.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.8.1/dist/vanilla-tilt.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.0/dist/pixi.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/kute.js@2.2.4/dist/kute.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+  <link rel="stylesheet" href="css/01-variables.css" />
+  <link rel="stylesheet" href="css/02-base.css" />
+  <link rel="stylesheet" href="css/03-phone.css" />
+  <link rel="stylesheet" href="css/04-components.css" />
+  <link rel="stylesheet" href="css/05-screens.css" />
+  <link rel="stylesheet" href="css/06-responsive.css" />
+  <link rel="stylesheet" href="css/07-animations.css" />
+  <link rel="stylesheet" href="css/08-overhaul.css" />
+</head>
+<body>
+  <!-- Canvas layers (background magic) -->
+  <canvas id="fx"></canvas>
+  <div id="tsparticles" aria-hidden="true"></div>
+  <div id="pixi-layer" aria-hidden="true"></div>
+
+  <div id="app">
+    <div id="phone">
+      <div class="ambient" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="scanlines" aria-hidden="true"></div>
+      <div class="sakura" aria-hidden="true"></div>
+
+      <div id="status-bar" class="status-bar"></div>
+      <main id="screen" class="screen"></main>
+    </div>
+  </div>
+
+  <script>
+    // @ts-nocheck
+    (function () {
+      function showFatal(msg) {
+        var el = document.getElementById("fatal");
+        if (!el) {
+          el = document.createElement("div");
+          el.id = "fatal";
+          el.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(8,3,20,.94);color:#ff8aa8;font:13px/1.7 ui-monospace,monospace;padding:24px;text-align:center;white-space:pre-wrap";
+          document.body.appendChild(el);
+        }
+        el.textContent = "DungeonOS gagal muat:\n" + msg + "\n\nCoba hard refresh (Ctrl/Cmd+Shift+R). Bila pakai server lokal, nyalakan 'Disable cache' di DevTools > Network.";
+      }
+      function report(loc, msg) {
+        var m = msg || "Unknown error";
+        if (loc) m += "\n  di: " + loc;
+        showFatal(m);
+      }
+      // Game pakai ES module -> TIDAK bisa dibuka lewat file:// (akan blank).
+      if (location.protocol === "file:") {
+        showFatal("Game ini pakai ES module dan TIDAK bisa dibuka langsung (file://).\n\nCara benar:\n1. Buka terminal di folder 'game'\n2. Jalankan:  python3 -m http.server 8000\n3. Buka:  http://localhost:8000\n\n(Jangan dobel-klik index.html.)");
+        return;
+      }
+      function isOurs(f) { return /\/js\/[^?]*\.js($|\?)/.test(f || ""); }
+      window.addEventListener("error", function (e) {
+        var f = e.filename || "";
+        // Hanya error dari modul game kita yang fatal. Error library CDN
+        // (gsap/pixi/dll) diabaikan — game sudah degrade gracefully.
+        if (!isOurs(f)) return;
+        var loc = f ? (f + ":" + (e.lineno || "?") + ":" + (e.colno || "?")) : "";
+        report(loc, e.message || (e.error && e.error.message) || "Unknown error");
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        if (window.__DUNGEON_READY__) return;
+        var r = e && e.reason;
+        report("", (r && r.message) || "Unhandled promise rejection");
+      });
+      setTimeout(function () {
+        if (!window.__DUNGEON_BOOTED__) showFatal("Modul tak selesai dimuat (kemungkinan file lama / cache). Cek tab Console untuk error asli beserta nama file.");
+      }, 6000);
+    })();
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
