@@ -1,7 +1,7 @@
 // App baru & rewrite: Toko Oren, CCTV, DungeonHub, TrapMart, HeroAlert, DungeonFeed,
 // Flappy Bird, Slots (judi rigged) + ending Koplak. Semua override APP_VIEWS via NEW_VIEWS.
 import { getState, mutate, addNotification, setEnding } from "../state.js";
-import { HUB_ENDING } from "../content/endings.js";
+import { HUB_ENDING, HUB_REVOLT_ENDING } from "../content/endings.js";
 import { icon, avatar } from "./icons.js";
 import { Lib, Sound, rand } from "../lib.js";
 import { toast } from "./toast.js";
@@ -337,7 +337,321 @@ function checkLevel(st) {
     st.stats.gold += 40; st.hub.earned += 40;
   }
 }
- const dungeonhub = (s) => {
+  const STATION_LABEL = { ride: "Ride", food: "Food", toko: "Toko", sec: "Keamanan" };
+  const HUB_DIRECTIVES = [
+    { id: "biasa", text: "HQ: Jalankan seperti biasa.", goldMul: 1, stamCost: 22, moraleCost: 12, ratingSwing: 1 },
+    { id: "rating", text: "HQ: Genjot rating — pelayanan ekstra.", goldMul: 1.15, stamCost: 28, moraleCost: 16, ratingSwing: 1.6 },
+    { id: "hemat", text: "HQ: Hemat tenaga — jangan bikin minion drop.", goldMul: 0.85, stamCost: 14, moraleCost: 8, ratingSwing: 0.8 },
+    { id: "ekspansi", text: "HQ: Ekspansi cepat — cuan gede, risiko insiden naik.", goldMul: 1.3, stamCost: 26, moraleCost: 15, ratingSwing: 1.2, incBonus: 0.2 }
+  ];
+  function rosterHtml(s) {
+    const mins = s.hub.minions || [];
+    return mins.map(m => `
+      <div class="rost-card">
+        <div class="rost-head"><b>${m.name}</b> <span class="rost-trait">${m.trait}</span></div>
+        <div class="rost-bar"><span>Morale</span><i class="${m.morale < 25 ? "crit" : ""}" style="width:${clamp(m.morale, 0, 100)}%"></i></div>
+        <div class="rost-bar"><span>Stamina</span><i class="${m.stamina < 25 ? "crit" : ""}" style="width:${clamp(m.stamina, 0, 100)}%"></i></div>
+      </div>`).join("");
+  }
+  function assignHtml(s) {
+    const mins = s.hub.minions || [];
+    const a = s.hub.assigned || {};
+    const ids = ["ride", "food", "toko", "sec"];
+    return ids.map(st2 => {
+      const sel = a[st2];
+      const opts = mins.map(m => `<button class="assign-btn ${sel === m.id ? "on" : ""} ${m.stamina <= 0 ? "off" : ""}" data-station="${st2}" data-min="${m.id}">${m.name}${m.stamina <= 0 ? " ⛔" : ""}</button>`).join("");
+      return `<div class="assign-row"><span class="assign-lab">${STATION_LABEL[st2]}</span><div class="assign-btns">${opts}</div></div>`;
+    }).join("");
+  }
+  function stockHtml(s) {
+    const stock = s.hub.stock || {};
+    const ids = ["ride", "food", "toko", "sec"];
+    return ids.map(s2 => `<div class="stock-row"><span class="stock-lab">${STATION_LABEL[s2]}: <b>${stock[s2] || 0}</b></span><button class="restock-btn" data-stk="${s2}">+5 (4g)</button></div>`).join("");
+  }
+  function dispatchGame(gameEl, total, done) {
+    gameEl.innerHTML = `<div class="ops-mini"><div class="ops-serve" id="ops-serve">${icon("minion")}<span>LAYANI!</span></div><div class="ops-info">Terlayani: <b id="ops-served">0</b>/${total}</div></div>`;
+    const serve = gameEl.querySelector("#ops-serve");
+    const servedEl = gameEl.querySelector("#ops-served");
+    let served = 0, round = 0, active = false, timer = null;
+    const next = () => {
+      if (round >= total) { done(served); return; }
+      round++; active = true; serve.classList.add("live");
+      let t = 0;
+      timer = setInterval(() => {
+        t += 60;
+        if (t >= 850) { clearInterval(timer); active = false; serve.classList.remove("live"); next(); }
+      }, 60);
+    };
+    serve.addEventListener("click", () => {
+      if (!active) return;
+      active = false; clearInterval(timer); serve.classList.remove("live");
+      served++; servedEl.textContent = served; next();
+    });
+    next();
+  }
+  function containmentGame(gameEl, done) {
+    const RUNES = [
+      { c: "#ff6b4a", g: "✦" }, { c: "#4ab0ff", g: "❉" },
+      { c: "#5be08a", g: "✺" }, { c: "#ffd24a", g: "❖" }
+    ];
+    gameEl.innerHTML = `<div class="ops-seal">
+      <div class="ops-seal-top"><span class="ops-seal-title">SEGEL RUNE</span><span class="ops-seal-timer"><i id="seal-bar"></i></span></div>
+      <div class="ops-seal-status" id="seal-status">Tonton urutan HQ...</div>
+      <div class="ops-runes">${RUNES.map((r, i) => `<button class="rune" data-r="${i}" style="--rc:${r.c}">${r.g}</button>`).join("")}</div>
+      <div class="ops-seal-dots" id="seal-dots"></div>
+    </div>`;
+    const statusEl = gameEl.querySelector("#seal-status");
+    const barEl = gameEl.querySelector("#seal-bar");
+    const dotsEl = gameEl.querySelector("#seal-dots");
+    const runeEls = [...gameEl.querySelectorAll(".rune")];
+    const TIME = 15000;
+    let timeLeft = TIME, seals = 0, round = 0, seq = [], inputPos = 0, locked = true, ended = false, timer = null;
+    const finish = (ok) => { if (ended) return; ended = true; if (timer) clearInterval(timer); done(ok); };
+    const renderDots = () => { dotsEl.textContent = "Segel: " + "●".repeat(seals) + "○".repeat(3 - seals) + "  (" + seals + "/3)"; };
+    const flash = (i, good) => { const el = runeEls[i]; el.classList.add(good ? "lit" : "bad"); setTimeout(() => el.classList.remove("lit", "bad"), 320); };
+    const playback = () => {
+      locked = true; statusEl.textContent = "Tonton urutan HQ...";
+      let i = 0;
+      const step = () => {
+        if (i >= seq.length) { locked = false; statusEl.textContent = "Ulangi urutannya!"; return; }
+        flash(seq[i], true); i++; setTimeout(step, 520);
+      };
+      setTimeout(step, 400);
+    };
+    const startRound = () => {
+      round++; seq = []; inputPos = 0;
+      const len = 2 + round;
+      for (let k = 0; k < len; k++) seq.push(Math.floor(Math.random() * 4));
+      renderDots(); playback();
+    };
+    runeEls.forEach(el => el.addEventListener("click", () => {
+      if (locked || ended) return;
+      const i = +el.dataset.r;
+      if (seq[inputPos] === i) {
+        flash(i, true); inputPos++;
+        if (inputPos >= seq.length) {
+          seals++; renderDots();
+          if (seals >= 3) { statusEl.textContent = "TERSEGEL! Monster aman."; setTimeout(() => finish(true), 350); }
+          else { statusEl.textContent = "Segel ke-" + seals + " berhasil!"; setTimeout(startRound, 650); }
+        }
+      } else {
+        flash(i, false); timeLeft -= 2500; statusEl.textContent = "Salah! -2.5dtk, ulangi...";
+        inputPos = 0; setTimeout(playback, 500);
+      }
+    }));
+    timer = setInterval(() => {
+      timeLeft -= 100; barEl.style.width = Math.max(0, (timeLeft / TIME) * 100) + "%";
+      if (timeLeft <= 0) { statusEl.textContent = "Waktu habis — monster lepas!"; finish(false); }
+    }, 100);
+    startRound();
+  }
+  // ============ FASE 3: MINI-GAME PER JOB ============
+  const COURIER_GIMMICKS = [
+    { e: "🕳️", t: "Lubang jalan", a: "duck" }, { e: "🐉", t: "Naga nyamber", a: "lompat" },
+    { e: "🌳", t: "Pohon tumbang", a: "kiri" }, { e: "🪨", t: "Batu jatuh", a: "kanan" },
+    { e: "🔥", t: "Api neraka", a: "lompat" }, { e: "🧊", t: "Es licin", a: "duck" },
+    { e: "👻", t: "Hantu jalan", a: "kiri" }, { e: "🦇", t: "Kelelawar", a: "duck" },
+    { e: "💀", t: "Tengkorak", a: "kanan" }, { e: "⚡", t: "Petir", a: "duck" },
+    { e: "🌪️", t: "Tornado", a: "lompat" }, { e: "🌫️", t: "Kabut tebal", a: "kiri" },
+    { e: "🚧", t: "Pembatas", a: "kanan" }, { e: "🐺", t: "Serigala", a: "lompat" },
+    { e: "🤖", t: "Robot HQ", a: "kiri" }, { e: "🌀", t: "Portal gaib", a: "kanan" },
+    { e: "🐍", t: "Ular raksasa", a: "duck" }, { e: "🦅", t: "Burung raksasa", a: "lompat" },
+    { e: "🧨", t: "Ledakan", a: "duck" }, { e: "🛑", t: "Lampu merah", a: "kiri" },
+    { e: "💸", t: "Pencuri dompet", a: "kanan" }, { e: "🍄", t: "Jamur ajaib", a: "lompat" },
+    { e: "🌋", t: "Lava", a: "lompat" }, { e: "❄️", t: "Badai salju", a: "duck" }
+  ];
+  const COOK_ING = [{ e: "🍞", t: "Roti" }, { e: "🥩", t: "Daging" }, { e: "🧀", t: "Keju" }, { e: "🥬", t: "Sayur" }, { e: "🍅", t: "Tomat" }, { e: "🍳", t: "Telur" }];
+  const PACK_BINS = [{ c: "#ff6b6b", t: "Merah" }, { c: "#4ab0ff", t: "Biru" }, { c: "#ffd24a", t: "Kuning" }];
+  function mgCourier(gameEl, done) {
+    const ROUNDS = 12;
+    gameEl.innerHTML = `<div class="mg-courier">
+      <div class="mg-info">KURIR: hindari <b id="c-num">0</b>/${ROUNDS} rintangan!</div>
+      <div class="mg-hazard" id="c-haz">🛵 Siap!</div>
+      <div class="mg-react">
+        <button class="react" data-a="kiri">⬅️ Kiri</button>
+        <button class="react" data-a="duck">⬇️ Duck</button>
+        <button class="react" data-a="lompat">⬆️ Lompat</button>
+        <button class="react" data-a="kanan">➡️ Kanan</button>
+      </div>
+      <div class="mg-prog"><i id="c-bar"></i></div>
+    </div>`;
+    const haz = gameEl.querySelector("#c-haz"), numEl = gameEl.querySelector("#c-num"), bar = gameEl.querySelector("#c-bar");
+    const reacts = [...gameEl.querySelectorAll(".react")];
+    let round = 0, hits = 0, cur = null, locked = false, timer = null, ended = false;
+    const finish = (sc) => { if (ended) return; ended = true; if (timer) clearInterval(timer); done(sc); };
+    const next = () => {
+      if (round >= ROUNDS) { finish(hits / ROUNDS); return; }
+      round++; numEl.textContent = round; cur = COURIER_GIMMICKS[Math.floor(Math.random() * COURIER_GIMMICKS.length)];
+      haz.textContent = cur.e + " " + cur.t; locked = false; let t = 0; bar.style.width = "100%";
+      timer = setInterval(() => { t += 50; bar.style.width = Math.max(0, 100 - t / 9) + "%"; if (t >= 900) { clearInterval(timer); locked = true; next(); } }, 50);
+    };
+    reacts.forEach(b => b.addEventListener("click", () => {
+      if (locked || ended || !cur) return;
+      const ok = b.dataset.a === cur.a; locked = true; clearInterval(timer); haz.textContent = ok ? "✅" : "❌"; if (ok) hits++; next();
+    }));
+    next();
+  }
+  function mgCook(gameEl, done) {
+    const ORDERS = 5;
+    gameEl.innerHTML = `<div class="mg-cook">
+      <div class="mg-info">DAPUR: selesaikan <b id="ck-num">0</b>/${ORDERS} pesanan!</div>
+      <div class="mg-order" id="ck-order"></div>
+      <div class="mg-ing" id="ck-ing"></div>
+    </div>`;
+    const numEl = gameEl.querySelector("#ck-num"), orderEl = gameEl.querySelector("#ck-order"), ingEl = gameEl.querySelector("#ck-ing");
+    let order = 0, need = [], ended = false;
+    const finish = (sc) => { if (ended) return; ended = true; done(sc); };
+    const mk = () => { const n = 2 + Math.floor(Math.random() * 2); const a = []; for (let k = 0; k < n; k++) a.push(Math.floor(Math.random() * COOK_ING.length)); return a; };
+    const nextOrder = () => { need = mk(); orderEl.innerHTML = "Pesan: " + need.map(i => COOK_ING[i].e).join(" + "); };
+    ingEl.innerHTML = COOK_ING.map((x, i) => `<button class="ing" data-i="${i}">${x.e} ${x.t}</button>`).join("");
+    ingEl.querySelectorAll(".ing").forEach(b => b.addEventListener("click", () => {
+      if (ended || !need.length) return;
+      if (+b.dataset.i === need[0]) { need.shift(); if (!need.length) { order++; numEl.textContent = order; if (order >= ORDERS) finish(1); else nextOrder(); } }
+      else { nextOrder(); }
+    }));
+    nextOrder(); setTimeout(() => finish(order / ORDERS), 22000);
+  }
+  function mgDrink(gameEl, done) {
+    const DRINKS = 3; let d = 0, hits = 0, ended = false, running = true, pos = 0, dir = 1, raf = null, zLo = 0, zHi = 0;
+    gameEl.innerHTML = `<div class="mg-drink">
+      <div class="mg-info">BAR: isi <b id="dr-num">0</b>/${DRINKS} gelas pas!</div>
+      <div class="mg-gauge"><i id="dr-fill"></i><span class="mg-zone" id="dr-zone"></span></div>
+      <button class="mg-pour" id="dr-pour">TUANG!</button>
+    </div>`;
+    const numEl = gameEl.querySelector("#dr-num"), fill = gameEl.querySelector("#dr-fill"), pour = gameEl.querySelector("#dr-pour"), zone = gameEl.querySelector("#dr-zone");
+    const newZone = () => { zLo = 35 + Math.random() * 35; zHi = zLo + 22; zone.style.left = zLo + "%"; zone.style.width = (zHi - zLo) + "%"; };
+    const loop = () => { if (!running) return; pos += dir * 1.8; if (pos >= 100) { pos = 100; dir = -1; } if (pos <= 0) { pos = 0; dir = 1; } fill.style.height = pos + "%"; raf = requestAnimationFrame(loop); };
+    const nextDrink = () => { d++; numEl.textContent = d; if (d > DRINKS) { running = false; if (raf) cancelAnimationFrame(raf); done(hits / DRINKS); return; } pos = 0; dir = 1; newZone(); };
+    pour.addEventListener("click", () => {
+      if (!running || ended) return;
+      if (pos >= zLo && pos <= zHi) hits++;
+      running = false; if (raf) cancelAnimationFrame(raf);
+      setTimeout(() => { running = true; nextDrink(); loop(); }, 500);
+    });
+    newZone(); loop();
+  }
+  function mgPack(gameEl, done) {
+    const N = 10;
+    gameEl.innerHTML = `<div class="mg-pack">
+      <div class="mg-info">TOKO: sortir <b id="pk-num">0</b>/${N} paket!</div>
+      <div class="mg-item" id="pk-item">📦</div>
+      <div class="mg-bins">${PACK_BINS.map((b, i) => `<button class="bin" data-b="${i}" style="--bc:${b.c}">${b.t}</button>`).join("")}</div>
+    </div>`;
+    const numEl = gameEl.querySelector("#pk-num"), itemEl = gameEl.querySelector("#pk-item"), bins = [...gameEl.querySelectorAll(".bin")];
+    let n = 0, hits = 0, cur = 0, ended = false;
+    const finish = (sc) => { if (ended) return; ended = true; done(sc); };
+    const next = () => { if (n >= N) { finish(hits / N); return; } n++; numEl.textContent = n; cur = Math.floor(Math.random() * 3); itemEl.textContent = ["📦", "🎁", "🛍️", "📯", "🗳️"][Math.floor(Math.random() * 5)]; };
+    bins.forEach(b => b.addEventListener("click", () => { if (ended) return; if (+b.dataset.b === cur) hits++; next(); }));
+    next();
+  }
+  function mgFinance(gameEl, done) {
+    const N = 5; let n = 0, hits = 0, pos = 0, dir = 1, raf = null, running = true, ended = false, sLo = 0, sHi = 0;
+    gameEl.innerHTML = `<div class="mg-fin">
+      <div class="mg-info">KEUANGAN: stem pel pas di zona AMAN <b id="fn-num">0</b>/${N}!</div>
+      <div class="mg-track"><span class="mg-safe" id="fn-safe"></span><i id="fn-mark"></i></div>
+      <button class="mg-stamp" id="fn-stamp">STEMPEL!</button>
+    </div>`;
+    const numEl = gameEl.querySelector("#fn-num"), mark = gameEl.querySelector("#fn-mark"), safe = gameEl.querySelector("#fn-safe"), stamp = gameEl.querySelector("#fn-stamp");
+    const newSafe = () => { sLo = 30 + Math.random() * 45; sHi = sLo + 20; safe.style.left = sLo + "%"; safe.style.width = (sHi - sLo) + "%"; };
+    const loop = () => { if (!running) return; pos += dir * 2; if (pos >= 100) { pos = 100; dir = -1; } if (pos <= 0) { pos = 0; dir = 1; } mark.style.left = pos + "%"; raf = requestAnimationFrame(loop); };
+    const next = () => { n++; numEl.textContent = n; if (n > N) { running = false; if (raf) cancelAnimationFrame(raf); done(hits / N); return; } newSafe(); };
+    stamp.addEventListener("click", () => {
+      if (!running || ended) return;
+      if (pos >= sLo && pos <= sHi) hits++;
+      running = false; if (raf) cancelAnimationFrame(raf);
+      setTimeout(() => { running = true; next(); loop(); }, 400);
+    });
+    newSafe(); loop();
+  }
+  function playJobGame(mod, gameEl, done) {
+    if (mod === "ride") return mgCourier(gameEl, done);
+    if (mod === "food") return (Math.random() < 0.5 ? mgCook : mgDrink)(gameEl, done);
+    if (mod === "mart" || mod === "toko") return mgPack(gameEl, done);
+    if (mod === "pay") return mgFinance(gameEl, done);
+    if (mod === "sec") return containmentGame(gameEl, done);
+    return mgCourier(gameEl, done);
+  }
+
+  function runShift(screen, handlers) {
+    const st = getState();
+    const out = screen.querySelector("#hub-shift-out");
+    if (!out) return;
+    if ((st.hub.strikeWarned || 0) >= 3) { setEnding(HUB_REVOLT_ENDING); handlers.rerender(); return; }
+    const mins = st.hub.minions || [];
+    const a = st.hub.assigned || {};
+    const stock = st.hub.stock || {};
+    const ids = ["ride", "food", "toko", "sec"];
+    const log = (txt, cls) => { const d = document.createElement("div"); d.className = "ops-msg " + (cls || ""); d.textContent = txt; out.appendChild(d); out.scrollTop = out.scrollHeight; };
+    const okAssign = ids.every(s2 => a[s2] && mins.find(m => m.id === a[s2] && (m.stamina || 0) > 0));
+    if (!okAssign) { log("Assign tiap stasiun dengan minion yg stamina > 0 dulu.", "bad"); return; }
+    const activeIds = ids.filter(s2 => { const m = mins.find(x => x.id === a[s2]); return m && (stock[s2] || 0) > 0; });
+    if (activeIds.length === 0) { log("Semua stasiun kehabisan stok! Restock dulu (atau tunggu hari baru).", "bad"); return; }
+    const dir = HUB_DIRECTIVES[Math.floor(Math.random() * HUB_DIRECTIVES.length)];
+    mutate(s2 => { s2.hub.directive = { id: dir.id, text: dir.text }; });
+    const prodStations = activeIds.filter(s2 => ["ride", "food", "toko"].includes(s2));
+    const secActive = activeIds.includes("sec");
+    if (prodStations.length === 0) { log("Tidak ada stasiun produksi aktif (Ride/Food/Toko). Assign & restock dulu.", "bad"); return; }
+    let skillSum = 0, moralSum = 0, cnt = 0;
+    prodStations.forEach(s2 => { const m = mins.find(x => x.id === a[s2]); if (m) { skillSum += (m.skill[s2] || 0); moralSum += (m.morale || 0); cnt++; } });
+    const avgMorale = cnt ? moralSum / cnt : 50;
+    const stockMul = activeIds.length / ids.length;
+    const baseVis = Math.round((st.hub.rating || 4) * 6 + skillSum * 4);
+    const visitors = Math.max(2, Math.round(baseVis * (0.6 + 0.4 * (avgMorale / 100)) * (0.4 + 0.6 * stockMul)));
+    const total = Math.min(12, visitors);
+    const perStation = Math.max(1, Math.round(total / prodStations.length));
+    log("Shift dimulai! " + dir.text, "info");
+    log("Pengunjung ~" + visitors + " · job aktif: " + prodStations.map(s2 => STATION_LABEL[s2]).join(", ") + (secActive ? " + Keamanan" : ""), "info");
+    const gameEl = document.createElement("div"); gameEl.id = "ops-game"; out.appendChild(gameEl);
+    let served = 0;
+    const runStation = (i) => {
+      if (i >= prodStations.length) { finishShift(); return; }
+      const stn = prodStations[i];
+      const label = stn === "ride" ? "KURIR" : stn === "food" ? "DAPUR/BAR" : "TOKO";
+      log("▶ " + label + ": main mini-game...", "info");
+      playJobGame(stn, gameEl, (score) => {
+        const got = Math.round(score * perStation);
+        served += got;
+        log(label + " hasil: " + got + " unit (" + Math.round(score * 100) + "%).", score > 0.5 ? "good" : "warn");
+        runStation(i + 1);
+      });
+    };
+    const finishShift = () => {
+      let gold = Math.round(served * 6 * dir.goldMul);
+      const incident = Math.random() < (0.35 + (dir.incBonus || 0) - (secActive ? 0.15 : 0));
+      let incidentOk = false;
+      const finish = () => {
+        mutate(st2 => {
+          st2.stats.gold += gold; st2.hub.earned += gold; st2.hub.dayEarned += gold;
+          st2.hub.xp += served * 2; checkLevel(st2);
+          activeIds.forEach(s2 => {
+            if ((st2.hub.stock[s2] || 0) > 0) st2.hub.stock[s2] = clamp((st2.hub.stock[s2] || 0) - 1, 0, 99);
+            const m = mins.find(x => x.id === a[s2]);
+            if (m) { m.stamina = clamp((m.stamina || 100) - dir.stamCost, 0, 100); m.morale = clamp((m.morale || 70) - dir.moraleCost, 0, 100); }
+          });
+          st2.hub.rating = clamp((st2.hub.rating || 4) + (served >= total * 0.7 ? 0.1 : -0.05) * dir.ratingSwing, 0, 5);
+          const avg = activeIds.reduce((s3, s4) => { const m = mins.find(x => x.id === a[s4]); return s3 + (m ? (m.morale || 0) : 0); }, 0) / Math.max(1, activeIds.length);
+          if (avg < 20) { st2.hub.strikeWarned = (st2.hub.strikeWarned || 0) + 1; st2.hub.rating = clamp((st2.hub.rating || 4) - 0.3, 0, 5); }
+          st2.hub.lastShift = { served, total, gold, incident, ok: incident ? incidentOk : false };
+        });
+        if (avgMorale < 20) log("⚠ Minion murung — morale rendah. Istirahatkan sebelum mereka mogok!", "warn");
+        markHubExhaustion();
+        if (checkHubGrind(handlers)) return;
+        maybeHubEvent(handlers);
+        handlers.rerender();
+      };
+      if (incident) {
+        log("⚠ INSIDEN: monster lepas! Segel dengan rune!", "warn");
+        containmentGame(gameEl, (ok) => {
+          incidentOk = ok;
+          if (ok) { gold += 20; mutate(s3 => { s3.stats.gold += 20; s3.hub.earned += 20; s3.hub.rating = clamp((s3.hub.rating || 4) + 0.05 * dir.ratingSwing, 0, 5); }); log("TERSEGEL! Bonus +20g & rating naik.", "good"); }
+          else { mutate(s3 => { s3.hub.rating = clamp((s3.hub.rating || 4) - 0.2, 0, 5); }); log("Lolos! Rating turun.", "bad"); }
+          finish();
+        });
+      } else { finish(); }
+    };
+    runStation(0);
+  }
+  const dungeonhub = (s) => {
    const tab = s.hub.tab || "ride";
    const rating = s.hub.rating;
    const lvl = s.hub.level || 1;
@@ -351,8 +665,13 @@ function checkLevel(st) {
      `<button class="hub-tab ${m === tab ? "on" : ""}" data-hub="${m}">${icon(m === "ride" ? "rider" : m === "food" ? "food" : m === "mart" ? "store" : "wallet")}<span>${HUB_LABEL[m]}</span></button>`).join("");
    const acts = HUB_ACTIONS.filter(a => a.mod === tab).map(a =>
      `<button class="hub-act ${noEnergy ? "disabled" : ""}" data-act="${a.id}" ${noEnergy ? "disabled" : ""}>${a.label}</button>`).join("");
-   const q = HUB_QUESTS[(s.hub.questIdx || 0) % HUB_QUESTS.length];
-   return {
+    const q = HUB_QUESTS[(s.hub.questIdx || 0) % HUB_QUESTS.length];
+    const roster = rosterHtml(s);
+    const assign = assignHtml(s);
+    const stock = stockHtml(s);
+    const directive = s.hub.directive ? `<div class="ops-dir">📡 ${s.hub.directive.text}</div>` : "";
+    const lastShift = s.hub.lastShift ? `<div class="ops-last">Shift terakhir: layani <b>${s.hub.lastShift.served}</b>/${s.hub.lastShift.total}, +${s.hub.lastShift.gold}g${s.hub.lastShift.incident ? (s.hub.lastShift.ok ? " · segel +20g" : " · monster lolos -rating") : ""}</div>` : "";
+    return {
     body: `
       <div class="hub-wrap">
       <p class="app-lead">DungeonHub - super-app dungeon. Jalankan bisnis beneran: energi harian ${energy}/14, HQ awasin cuanmu.</p>
@@ -369,44 +688,65 @@ function checkLevel(st) {
          <div class="hub-quest-body">${q.t}</div>
          <button class="hub-quest-btn" data-act="quest">Ambil (+${q.g}g, +${q.xp}xp) · sisa ${qLeft}/5</button>
        </div>
-       <div class="hub-actions">${acts}</div>
-       </div>`,
+         <div class="hub-actions">${acts}</div>
+         <div id="hub-action-out" class="hub-shift-out"></div>
+         <div class="hub-ops">
+          <div class="hub-ops-head">${icon("skull")}<span>EVIL OPS · Mode Per-Shift (Fase 1+2)</span></div>
+          <div class="roster">${roster}</div>
+          <div class="assign">${assign}</div>
+          <div class="stock-head">STOK & RESTOCK (tiap shift habis 1/stasiun aktif)</div>
+          <div class="stock">${stock}</div>
+          <button class="action-btn hub-shift" id="hub-shift">${icon("bolt")}<span>Mulai Shift</span></button>
+          ${directive}
+          <div id="hub-shift-out" class="hub-shift-out"></div>
+          ${lastShift}
+        </div>
+        </div>`,
      mount(screen, state, handlers) {
        screen.querySelectorAll(".hub-tab").forEach(b => b.addEventListener("click", () => {
          Sound.tap(); mutate(st => { st.hub.tab = b.dataset.hub; }); handlers.rerender();
        }));
-       screen.querySelectorAll(".hub-act").forEach(b => {
-         if (b.disabled) return;
-         b.addEventListener("click", () => {
-           const a = HUB_ACTIONS.find(x => x.id === b.dataset.act);
-           if (!a) return;
-           Sound.tap();
-           let audited = false;
-           mutate(st => {
-             if ((st.hub.energy == null ? 14 : st.hub.energy) <= 0) return;
-             st.hub.energy = (st.hub.energy == null ? 14 : st.hub.energy) - 1;
-             const r = a.run(st) || {};
-             if (r.g) { st.stats.gold += r.g; st.hub.earned += r.g; st.hub.dayEarned = (st.hub.dayEarned || 0) + r.g; }
-             if (r.x) st.hub.xp += r.x;
-             if (r.rep) st.stats.reputation = clamp(st.stats.reputation + r.rep, 0, 100);
-             if (r.morale) st.stats.morale = clamp(st.stats.morale + r.morale, 0, 100);
-             if (r.loot) st.stats.loot += r.loot;
-             if (r.hero) shiftFac(st, "hero", r.hero);
-             if (r.union) shiftFac(st, "serikat", r.union);
-             if (r.stab) st.stats.stability = clamp(st.stats.stability + r.stab, 0, 100);
-             if (r.rating) st.hub.rating = clamp(st.hub.rating + r.rating, 0, 5);
-             checkLevel(st);
-             if (!st.hub.auditedToday && (st.hub.dayEarned || 0) > 160) { auditPenalty(st); audited = true; }
-           });
-           markHubExhaustion();
-           if (checkHubGrind(handlers)) return;
-           if (audited) {
-             choiceModal("⚠ AUDIT HQ", `<p>Cuan terlalu mulus hari ini. HQ curiga & mengaudit.</p><p class="modal-satir">Kelebihan cuan di atas wajar dipajak, morale &amp; reputasi turun. Main fair, bos.</p>`, [{ label: "Siap, bos", run: () => {} }], () => handlers.rerender());
-             return;
-           }
-           if (maybeHubEvent(handlers)) return;
-           handlers.rerender();
-         });
+        screen.querySelectorAll(".hub-act").forEach(b => {
+          if (b.disabled) return;
+          b.addEventListener("click", () => {
+            const a = HUB_ACTIONS.find(x => x.id === b.dataset.act);
+            if (!a) return;
+            Sound.tap();
+            const energy = (getState().hub.energy == null ? 14 : getState().hub.energy);
+            if (energy <= 0) { toast("Energi habis. Tunggu hari baru.", { ico: "bolt", cls: "toast-bad" }); return; }
+            const aout = screen.querySelector("#hub-action-out");
+            if (aout) aout.innerHTML = "";
+            playJobGame(a.mod, aout, (raw) => {
+              const sc = clamp(raw, 0, 1);
+              let audited = false;
+              mutate(st => {
+                st.hub.energy = (st.hub.energy == null ? 14 : st.hub.energy) - 1;
+                const base = a.run(st) || {};
+                const r = {};
+                for (const k in base) { const v = base[k]; r[k] = (typeof v === "number") ? (["g", "x", "loot", "rep", "hero", "union", "stab", "morale"].includes(k) ? Math.round(v * sc) : v * sc) : v; }
+                if (r.g) { st.stats.gold += r.g; st.hub.earned += r.g; st.hub.dayEarned = (st.hub.dayEarned || 0) + r.g; }
+                if (r.x) st.hub.xp += r.x;
+                if (r.rep) st.stats.reputation = clamp(st.stats.reputation + r.rep, 0, 100);
+                if (r.morale) st.stats.morale = clamp(st.stats.morale + r.morale, 0, 100);
+                if (r.loot) st.stats.loot += r.loot;
+                if (r.hero) shiftFac(st, "hero", r.hero);
+                if (r.union) shiftFac(st, "serikat", r.union);
+                if (r.stab) st.stats.stability = clamp(st.stats.stability + r.stab, 0, 100);
+                if (r.rating) st.hub.rating = clamp(st.hub.rating + r.rating, 0, 5);
+                checkLevel(st);
+                if (!st.hub.auditedToday && (st.hub.dayEarned || 0) > 160) { auditPenalty(st); audited = true; }
+              });
+              if (aout) aout.innerHTML = `<div class="ops-msg ${sc > 0.5 ? "good" : "warn"}">${a.label}: ${Math.round(sc * 100)}% berhasil.</div>`;
+              markHubExhaustion();
+              if (checkHubGrind(handlers)) return;
+              if (audited) {
+                choiceModal("⚠ AUDIT HQ", `<p>Cuan terlalu mulus hari ini. HQ curiga & mengaudit.</p><p class="modal-satir">Kelebihan cuan di atas wajar dipajak, morale &amp; reputasi turun. Main fair, bos.</p>`, [{ label: "Siap, bos", run: () => {} }], () => handlers.rerender());
+                return;
+              }
+              if (maybeHubEvent(handlers)) return;
+              handlers.rerender();
+            });
+          });
        });
        const qb = screen.querySelector(".hub-quest-btn");
        if (qb) qb.addEventListener("click", () => {
@@ -428,12 +768,26 @@ function checkLevel(st) {
            choiceModal("⚠ AUDIT HQ", `<p>Cuan terlalu mulus hari ini. HQ curiga & mengaudit.</p><p class="modal-satir">Kelebihan cuan di atas wajar dipajak, morale &amp; reputasi turun. Main fair, bos.</p>`, [{ label: "Siap, bos", run: () => {} }], () => handlers.rerender());
            return;
          }
-         if (maybeHubEvent(handlers)) return;
-         handlers.rerender();
-       });
-     }
-   };
- };
+          if (maybeHubEvent(handlers)) return;
+          handlers.rerender();
+        });
+        screen.querySelectorAll(".assign-btn").forEach(b => b.addEventListener("click", () => {
+          Sound.tap();
+          mutate(st => { if (!st.hub.assigned) st.hub.assigned = {}; st.hub.assigned[b.dataset.station] = b.dataset.min; });
+          handlers.rerender();
+        }));
+        screen.querySelectorAll(".restock-btn").forEach(b => b.addEventListener("click", () => {
+          Sound.tap();
+          let ok = false;
+          mutate(st => { const c = 4; if (st.stats.gold >= c) { st.stats.gold -= c; st.hub.stock[b.dataset.stk] = clamp((st.hub.stock[b.dataset.stk] || 0) + 5, 0, 99); ok = true; } });
+          if (!ok) toast("Gold kurang buat restock.", { ico: "coin", cls: "toast-bad" });
+          handlers.rerender();
+        }));
+        const shiftBtn = screen.querySelector("#hub-shift");
+        if (shiftBtn) shiftBtn.addEventListener("click", () => { Sound.tap(); runShift(screen, handlers); });
+      }
+    };
+  };
 const HUB_QUESTS = [
   { t: "Antar naga ke Elf Forest (bayar nyawa)", g: 30, xp: 12 },
   { t: "Flash sale 'Bunuh naga diskon 90%'", g: 22, xp: 10 },

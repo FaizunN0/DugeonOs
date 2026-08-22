@@ -55,9 +55,10 @@
   background: radial-gradient(circle at 30% 30%, #ffd1ec, #ff7ac6 60%, #ff4fd8);
   border-radius: 12px 1px 12px 1px;
   opacity: 0.85;
-  filter: drop-shadow(0 0 6px rgba(255,122,198,0.6));
+  will-change: transform;
   animation: petalFall linear infinite;
 }
+@media (prefers-reduced-motion: reduce) { .sakura { display: none; } }
 
 /* status bar */
 .status-bar {

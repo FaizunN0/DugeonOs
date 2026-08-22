@@ -191,6 +191,15 @@ export const APPS = [
     hidden: false
   },
   {
+    id: "monopoli",
+    name: "Monopoli",
+    icon: "coin",
+    accent: "#FFD86B",
+    description: "Konon akan ada. Atau tidak jadi. Masih dibahas.",
+    defaultUnlocked: true,
+    hidden: false
+  },
+  {
     id: "settings",
     name: "Settings",
     icon: "settings",

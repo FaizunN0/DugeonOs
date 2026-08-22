@@ -204,7 +204,25 @@ function migrate(s) {
   if (!s.traps) s.traps = {};
   if (!s.inventory) s.inventory = {};
   if (!s.cctv || typeof s.cctv !== "object") s.cctv = { logs: [], watched: 0, boxes: 3, intel: 0, scans: 6 };
-  if (!s.hub || typeof s.hub !== "object") s.hub = { tab: "ride", rating: 4.8, rides: 0, foods: 0, mart: 0, pay: 0, earned: 0, level: 1, xp: 0, questIdx: 0, energy: 14, dayEarned: 0, audit: 0, questDone: 0, sinceEvent: 0, auditedToday: false, exhaustedDays: {} };
+  function defaultHubMinions() {
+    return [
+      { id: "m1", name: "Bowo", trait: "rajin", morale: 80, stamina: 100, skill: { ride: 3, food: 2, toko: 2, sec: 1 } },
+      { id: "m2", name: "Sari", trait: "ceroboh", morale: 70, stamina: 100, skill: { ride: 2, food: 3, toko: 2, sec: 1 } },
+      { id: "m3", name: "Joko", trait: "unionis", morale: 60, stamina: 100, skill: { ride: 2, food: 2, toko: 3, sec: 2 } },
+      { id: "m4", name: "Dewi", trait: "loyal", morale: 85, stamina: 100, skill: { ride: 1, food: 2, toko: 2, sec: 3 } }
+    ];
+  }
+  if (!s.hub || typeof s.hub !== "object") s.hub = {
+    tab: "ride", rating: 4.8, rides: 0, foods: 0, mart: 0, pay: 0, earned: 0, level: 1, xp: 0,
+    questIdx: 0, energy: 14, dayEarned: 0, audit: 0, questDone: 0, sinceEvent: 0, auditedToday: false,
+    exhaustedDays: {}, minions: defaultHubMinions(), assigned: { ride: "m1", food: "m2", toko: "m3", sec: "m4" }, shiftDay: 1, strikeWarned: 0, stock: { ride: 10, food: 10, toko: 10, sec: 10 }, directive: null
+  };
+  if (s.hub && !s.hub.minions) s.hub.minions = defaultHubMinions();
+  if (s.hub && !s.hub.assigned) s.hub.assigned = { ride: "m1", food: "m2", toko: "m3", sec: "m4" };
+  if (s.hub && s.hub.shiftDay == null) s.hub.shiftDay = 1;
+  if (s.hub && s.hub.strikeWarned == null) s.hub.strikeWarned = 0;
+  if (s.hub && !s.hub.stock) s.hub.stock = { ride: 10, food: 10, toko: 10, sec: 10 };
+  if (s.hub && s.hub.directive == null) s.hub.directive = null;
   if (!s.heroalert || typeof s.heroalert !== "object") s.heroalert = { level: 2 };
   if (s.flags && s.flags.lowPerf === undefined) s.flags.lowPerf = false;
   if (!s.tokooren || typeof s.tokooren !== "object") s.tokooren = { bought: 0, broken: 0 };

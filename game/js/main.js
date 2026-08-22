@@ -32,21 +32,24 @@ function initAmbient() {
   }
 }
 
-// Falling sakura petals (pure CSS animation).
+// Falling sakura petals (pure CSS animation, perf-friendly).
 function initSakura() {
   const layer = document.querySelector(".sakura");
   if (!layer) return;
-  const N = 14;
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;
+  const N = 8;
   for (let i = 0; i < N; i++) {
     const p = document.createElement("span");
     p.className = "petal";
     p.style.left = Math.random() * 100 + "%";
-    const dur = 7 + Math.random() * 8;
+    const dur = 9 + Math.random() * 7;
     p.style.animationDuration = dur + "s";
     p.style.animationDelay = -Math.random() * dur + "s";
-    const sc = 0.6 + Math.random() * 0.9;
-    p.style.transform = `scale(${sc})`;
-    p.style.opacity = (0.5 + Math.random() * 0.4).toFixed(2);
+    const sz = 8 + Math.random() * 8;
+    p.style.width = sz + "px";
+    p.style.height = sz + "px";
+    p.style.opacity = (0.45 + Math.random() * 0.4).toFixed(2);
     layer.appendChild(p);
   }
 }

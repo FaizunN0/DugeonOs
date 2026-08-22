@@ -427,10 +427,23 @@ export const ENDINGS = [
       "Di akhir hari ke-10, layar muncul: 'EFISIENSI MAKSIMAL. APakah kamu bahagia?' Kamu mengetik: '...lupa.'",
       "Ini ending buat yang main beneran. Istirahatlah, bos. Dungeon bisa nunggu."
     ]
+  },
+  {
+    id: "hub_revolt",
+    tone: "unik",
+    title: "Ending ✊: Minion Mogok Besar",
+    tag: "Ending 'boleh kalah' — morale hancur karena kerja paksa",
+    body: [
+      "Tiga shift berturut-turut kau paksa minion kerja sampai morale-nya nol. Bowo, Sari, Joko, Dewi... mereka akhirnya letakkan sapu & trap.",
+      "DungeonHub diam. Tak ada yang melayani. Pengunjung pulang. Rating anjlok ke 0. HQ menelpon: 'Kau pecat, atau kau yang dipecat.'",
+      "Minion berdiri di depan mejamu, tersenyum lelah: 'Kami bukan NPC, bos.' Lalu mereka buka serikat resmi.",
+      "Kau kalah — tapi kali ini kalahnya adil. Istirahatkan minionmu. Game over (untuk hari ini)."
+    ]
   }
 ];
 
 export const HUB_ENDING = ENDINGS.find(e => e.id === "hub_grind");
+export const HUB_REVOLT_ENDING = ENDINGS.find(e => e.id === "hub_revolt");
 
 export function evaluateEnding(state) {
   const f = state.flags;

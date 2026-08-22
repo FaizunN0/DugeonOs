@@ -567,6 +567,12 @@ button .ico { width: 18px; height: 18px; flex: none; }
  .bet-btn[data-bet="all"] { color: #ff8a8a; border-color: #ff6b6b66; }
  .bet-btn.on[data-bet="all"] { background: #ff6b6b22; color: #ff8a8a; }
 
+/* ===================== MONOPOLI (placeholder) ===================== */
+.mono-card { margin-top: 6px; }
+.mono-note { font-size: 13px; line-height: 1.6; color: var(--text); background: var(--bg-3); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.mono-hush { margin-top: 14px; padding: 18px 16px; border-radius: 14px; font-weight: 800; font-size: 14px; line-height: 1.5; text-align: center; color: #1a0030; background: linear-gradient(100deg, #ffe53b, #ff2d95, #7b2ff7, #21d4fd); background-size: 300% 300%; animation: monoShift 4s ease infinite; box-shadow: 0 0 24px rgba(255,45,149,.5); }
+@keyframes monoShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
 /* ===================== BGM (jukebox) ===================== */
 .bgm-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
 .bgm-stop { background: #2a1410; border: 1px solid #ff6b3555; color: #ffb59f; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
@@ -647,3 +653,90 @@ body.perf .sakura,
 body.perf #tsparticles,
 body.perf #fx,
 body.perf #pixi-layer { display: none !important; }
+
+/* ---------- DUNGEONHUB EVIL OPS (Fase 1) ---------- */
+.hub-ops { margin-top:14px; padding:12px; border:1px solid #3a2a4a; border-radius:12px; background:linear-gradient(180deg,#1a1320,#15101c); }
+.hub-ops-head { display:flex; align-items:center; gap:8px; font-weight:700; letter-spacing:.5px; color:#ff8bd0; margin-bottom:10px; text-transform:uppercase; font-size:.82rem; }
+.hub-ops-head svg, .hub-ops-head .ico { width:18px; height:18px; }
+.roster { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+.rost-card { background:#0f0a16; border:1px solid #2a2030; border-radius:10px; padding:8px 10px; }
+.rost-head { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.rost-head b { color:#fff; }
+.rost-trait { font-size:.68rem; color:#9a8fb0; background:#241a2e; padding:1px 6px; border-radius:8px; }
+.rost-bar { display:flex; align-items:center; gap:6px; font-size:.66rem; color:#b9aed0; margin:3px 0; }
+.rost-bar span { width:48px; flex:none; }
+.rost-bar i { display:block; height:8px; border-radius:5px; background:linear-gradient(90deg,#5be08a,#36c46a); }
+.rost-bar i.crit { background:linear-gradient(90deg,#ff5d5d,#c43030); }
+.assign { display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
+.assign-row { display:flex; align-items:center; gap:8px; }
+.assign-lab { width:64px; flex:none; font-size:.72rem; color:#cbb8e6; font-weight:600; }
+.assign-btns { display:flex; flex-wrap:wrap; gap:5px; }
+.assign-btn { background:#1c1426; color:#d7c9ef; border:1px solid #34263f; border-radius:18px; padding:5px 10px; font-size:.72rem; cursor:pointer; transition:.15s; }
+.assign-btn.on { background:#7a3df0; color:#fff; border-color:#9a6bff; box-shadow:0 0 8px rgba(154,107,255,.5); }
+.assign-btn.off { opacity:.4; cursor:not-allowed; }
+.action-btn.hub-shift { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; background:linear-gradient(90deg,#ff5d8f,#b13bff); color:#fff; border:none; border-radius:12px; padding:11px; font-weight:700; font-size:.9rem; cursor:pointer; box-shadow:0 4px 14px rgba(177,59,255,.35); }
+.action-btn.hub-shift svg, .action-btn.hub-shift .ico { width:18px; height:18px; }
+.hub-shift-out { max-height:320px; overflow-y:auto; margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+.ops-msg { font-size:.74rem; padding:6px 9px; border-radius:8px; background:#160f1f; border-left:3px solid #4a3a5c; color:#cdbef0; }
+.ops-msg.info { border-color:#5b8bff; }
+.ops-msg.good { border-color:#5be08a; color:#bff7cf; }
+.ops-msg.bad { border-color:#ff5d5d; color:#ffc1c1; }
+.ops-msg.warn { border-color:#ffba49; color:#ffe1a8; }
+.ops-last { margin-top:8px; font-size:.74rem; color:#9fe6c4; background:#102016; border:1px solid #1f4a32; border-radius:8px; padding:6px 9px; }
+.ops-mini { text-align:center; padding:10px; }
+.ops-serve { display:inline-flex; align-items:center; gap:6px; background:#2a1650; color:#fff; border:2px solid #8a5bff; border-radius:14px; padding:14px 22px; font-weight:800; font-size:1rem; cursor:pointer; transition:.1s; }
+.ops-serve svg, .ops-serve .ico { width:22px; height:22px; }
+.ops-serve.live { background:#7a3df0; box-shadow:0 0 18px rgba(154,107,255,.8); transform:scale(1.06); }
+.ops-arena { position:relative; height:160px; background:radial-gradient(circle at 50% 40%,#2a1030,#120a18); border:1px solid #3a2545; border-radius:10px; overflow:hidden; }
+.ops-monster { position:absolute; width:38px; height:38px; transform:translate(-50%,-50%); cursor:pointer; filter:drop-shadow(0 0 6px #ff5d8f); }
+.ops-monster svg, .ops-monster .ico { width:38px; height:38px; }
+
+/* ---------- DUNGEONHUB FASE 2: STOK + DIREKTIF + SEGEL RUNE ---------- */
+.stock-head { font-size:.7rem; color:#9a8fb0; text-transform:uppercase; letter-spacing:.5px; margin:4px 0; }
+.stock { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:12px; }
+.stock-row { display:flex; align-items:center; justify-content:space-between; gap:6px; background:#120c1a; border:1px solid #2a2030; border-radius:8px; padding:5px 8px; }
+.stock-lab { font-size:.72rem; color:#cbb8e6; }
+.stock-lab b { color:#fff; }
+.restock-btn { background:#1c2b1c; color:#9af0a8; border:1px solid #2f5a36; border-radius:14px; padding:3px 9px; font-size:.68rem; cursor:pointer; }
+.restock-btn:hover { background:#26432a; }
+.ops-dir { margin:8px 0 2px; font-size:.74rem; color:#ffd98a; background:#221a10; border:1px solid #4a3a1c; border-radius:8px; padding:6px 9px; }
+.ops-seal { padding:8px; }
+.ops-seal-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+.ops-seal-title { font-weight:800; letter-spacing:1px; color:#ff8bd0; font-size:.8rem; }
+.ops-seal-timer { flex:1; height:8px; background:#1a1320; border-radius:5px; overflow:hidden; }
+.ops-seal-timer i { display:block; height:100%; width:100%; background:linear-gradient(90deg,#5be08a,#ffd24a,#ff5d5d); transition:width .1s linear; }
+.ops-seal-status { text-align:center; font-size:.76rem; color:#cdbef0; margin:4px 0 8px; min-height:1em; }
+.ops-runes { display:flex; gap:10px; justify-content:center; }
+.rune { width:54px; height:54px; border-radius:50%; border:2px solid var(--rc); background:#150e1c; color:var(--rc); font-size:1.4rem; font-weight:800; cursor:pointer; box-shadow:0 0 0 rgba(0,0,0,0); transition:transform .08s, box-shadow .12s; }
+.rune.lit { background:var(--rc); color:#150e1c; transform:scale(1.12); box-shadow:0 0 16px var(--rc); }
+.rune.bad { background:#ff3b3b; color:#fff; transform:scale(.92); }
+.ops-seal-dots { text-align:center; margin-top:8px; font-size:.8rem; color:#ffd24a; letter-spacing:2px; }
+
+/* ---------- DUNGEONHUB FASE 3: MINI-GAME PER JOB ---------- */
+.mg-info { font-size:.74rem; color:#cdbef0; margin-bottom:6px; }
+.mg-info b { color:#fff; }
+.mg-courier { text-align:center; padding:6px; }
+.mg-hazard { font-size:1.3rem; font-weight:800; color:#fff; padding:10px; background:#160f1f; border-radius:10px; margin-bottom:8px; min-height:1.6em; }
+.mg-react { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.react { background:#241634; color:#fff; border:2px solid #6c4f86; border-radius:12px; padding:12px; font-weight:700; font-size:.85rem; cursor:pointer; }
+.react:active { background:#7a3df0; transform:scale(.97); }
+.mg-prog { height:8px; background:#1a1320; border-radius:5px; overflow:hidden; margin-top:8px; }
+.mg-prog i { display:block; height:100%; width:100%; background:linear-gradient(90deg,#5be08a,#ffd24a,#ff5d5d); }
+.mg-cook { padding:6px; }
+.mg-order { text-align:center; font-size:1.1rem; min-height:1.6em; margin-bottom:8px; color:#fff; background:#160f1f; border-radius:10px; padding:8px; }
+.mg-ing { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.ing { background:#1c1426; color:#d7c9ef; border:1px solid #34263f; border-radius:10px; padding:10px 4px; font-size:.72rem; cursor:pointer; }
+.ing:active { background:#7a3df0; color:#fff; }
+.mg-drink, .mg-fin { padding:6px; text-align:center; }
+.mg-gauge { position:relative; height:120px; width:60px; margin:8px auto; background:#0f0a16; border:2px solid #34263f; border-radius:10px; overflow:hidden; }
+.mg-gauge i { position:absolute; left:0; bottom:0; width:100%; background:linear-gradient(0deg,#4ab0ff,#7a3df0); height:0%; transition:height .03s linear; }
+.mg-zone { position:absolute; left:0; width:100%; background:rgba(91,224,138,.35); border-top:1px solid #5be08a; border-bottom:1px solid #5be08a; }
+.mg-pour, .mg-stamp { margin-top:8px; background:linear-gradient(90deg,#ff5d8f,#b13bff); color:#fff; border:none; border-radius:12px; padding:10px 18px; font-weight:700; cursor:pointer; }
+.mg-track { position:relative; height:22px; background:#0f0a16; border:1px solid #34263f; border-radius:12px; margin:10px 0; overflow:hidden; }
+.mg-safe { position:absolute; top:0; height:100%; background:rgba(91,224,138,.3); border-left:1px solid #5be08a; border-right:1px solid #5be08a; }
+.mg-track i, .mg-mark { position:absolute; top:-2px; width:6px; height:26px; background:#ffd24a; border-radius:3px; left:0; box-shadow:0 0 6px #ffd24a; }
+.mg-pack { padding:6px; text-align:center; }
+.mg-item { font-size:2rem; min-height:1.4em; margin:6px 0; }
+.mg-bins { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.bin { color:#fff; border:2px solid var(--bc); background:#160f1f; border-radius:12px; padding:12px 4px; font-weight:700; font-size:.78rem; cursor:pointer; }
+.bin:active { background:var(--bc); }

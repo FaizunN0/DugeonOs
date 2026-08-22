@@ -44,7 +44,17 @@ function enter(st, id) {
     }
     // reset harian untuk mekanisme anti-curang
     if (st.cctv) st.cctv.scans = 6;
-    if (st.hub) { st.hub.energy = 14; st.hub.dayEarned = 0; st.hub.questDone = 0; st.hub.sinceEvent = 0; st.hub.auditedToday = false; }
+    if (st.hub) {
+      st.hub.energy = 14; st.hub.dayEarned = 0; st.hub.questDone = 0; st.hub.sinceEvent = 0; st.hub.auditedToday = false;
+      st.hub.shiftDay = (st.hub.shiftDay || 1) + 1;
+      (st.hub.minions || []).forEach(m => {
+        m.stamina = clamp((m.stamina || 0) + 30, 0, 100);
+        m.morale = clamp((m.morale || 0) + 12, 0, 100);
+      });
+      const sk = st.hub.stock || {};
+      ["ride", "food", "toko", "sec"].forEach(k => { sk[k] = clamp((sk[k] || 0) + 2, 0, 99); });
+      st.hub.directive = null;
+    }
   }
   clampStats(st);
 }

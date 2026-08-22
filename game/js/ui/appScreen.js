@@ -187,6 +187,12 @@ const PATCHES = [
     "HeroAlert: mini-game SERGAP (tangkap hero) kini punya waktu jauh lebih longgar per level (Mudah 13 dtk, Normal 10 dtk, Susah 7.5 dtk) & target lebih pelan di Mudah — Brave-X tak lagi selalu kabur.",
     "CCTV: desain ulang jadi persis alat CCTV asli — unit kamera (lensa + REC), monitor tiap kamera dengan scanline, grid lantai, blip gerak & timestamp LIVE.",
     "Mode Hemat: tombol baru di Pengaturan (default MATI) yang mematiin blur, blend-mode, glow & animasi terus-menerus + sembunyikan lapisan partikel — buat hp yang ngelag."
+  ] },
+  { ver: "v0.4.7-mini", date: "Hari Ini", title: "Mini Update: Perbaikan, Slot Revamp & DungeonHub", items: [
+    "DungeonFeed: perbaiki ikon tombol 'Lanjut' (bolt) yang membesar menutupi teks di node cerita tanpa pilihan — ukurannya kini normal.",
+    "DungeonSlots: revamp total — 'Top Up ALL' (ubah semua gold jadi saldo), taruhan 1x/2x/5x/10x/ALL-IN, & simbol jadi berarti (3 SAMA = menang, tiap ikon punya nilai x3/x5/x8/x10/x12). Uang jadi gampang habis.",
+    "Aplikasi baru (placeholder): Monopoli — masih dibahas mau dibuat atau tidak; berisi pesan bercanda.",
+    "DungeonHub 'Evil Ops' (BESAR): konsep SELESAI & DISSETUJUI (seimbang + per-shift + boleh kalah). FASE 1+2+3 MASUK: loop per-shift, roster minion + morale/stamina, supply chain (stok + restock gold), directive HQ, & ending 'Mogok Besar' (boleh kalah). Mini-game PER-JOB: Kurir (perjalanan dgn 24 rintangan/gimmick), Dapur (susun pesanan) / Bar (tuang pas), Toko (sortir kemas), Keuangan (stempel pas), & Segel Rune (tangani insiden) — tiap tombol aksi & tiap stasiun shift punya mini-gamenya sendiri."
   ] }
 ];
 
@@ -1107,6 +1113,16 @@ const APP_VIEWS = {
         ask.addEventListener("click", () => { Sound.tap(); flash(lines[Math.floor(Math.random() * lines.length)]); moBurst(120, 60, "var(--cyan)"); });
         pred.addEventListener("click", () => { Sound.tap(); flash(predik()); });
       }
+    };
+  },
+  monopoli(s) {
+    return {
+      body: `
+        <p class="app-lead">Monopoli — aplikasi yang konon akan ada. Status: masih dibahas, mau dibuat apa tidak jadi.</p>
+        <div class="mono-card">
+          <p class="mono-note">Aplikasi <b>Monopoli</b> masih didiskusikan: apa jadi dibuat, apa tidak jadi. Nanti kalau disetujui, baru kami koding. Sabar, Bos.</p>
+          <div class="mono-hush">🤫 Konon katanya ada yang sudah main 20 putaran tapi belum kelar kelar</div>
+        </div>`
     };
   }
 };
