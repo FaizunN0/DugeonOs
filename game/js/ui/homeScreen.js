@@ -6,6 +6,7 @@ import { Lib, Sound } from "../lib.js";
 import { triggerGlitch } from "./glitch.js";
 
 let lastAnomaly = 0;
+let homeClockTimer = null;
 
 function formatTime(d = new Date()) {
   return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -41,6 +42,7 @@ function gremSays(s) {
 
 export function renderHome(screen, state, handlers) {
   syncPerf(!!(state.flags && state.flags.lowPerf));
+  if (homeClockTimer) { clearInterval(homeClockTimer); homeClockTimer = null; }
   const visibleApps = APPS.filter(app => state.apps[app.id] === true);
   const day = state.day || 1;
   const phase = PHASE_LABELS[state.phase] || state.phase;
@@ -106,7 +108,7 @@ export function renderHome(screen, state, handlers) {
     <div class="home">
       <header class="home-top">
         <div class="home-greet">
-          <div class="home-time">${formatTime()}</div>
+          <div class="home-time" id="home-clock">${formatTime()}</div>
           <div class="home-date">${formatDate()} · Hari ${day}</div>
         </div>
         <div class="home-status">${statusLine(state)}</div>
@@ -195,4 +197,11 @@ export function renderHome(screen, state, handlers) {
     lastAnomaly = now;
     setTimeout(() => triggerGlitch(), 600);
   }
+
+  // Jam besar di home ikut waktu asli (update tiap detik, auto-clear saat ganti layar).
+  homeClockTimer = setInterval(() => {
+    const el = screen.querySelector("#home-clock");
+    if (!el) { clearInterval(homeClockTimer); homeClockTimer = null; return; }
+    el.textContent = formatTime();
+  }, 1000);
 }
