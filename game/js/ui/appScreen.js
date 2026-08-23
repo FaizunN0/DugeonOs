@@ -150,11 +150,6 @@ const ROSTER = [
 
 // Catatan rilis, dari yang paling lama -> terbaru.
 const PATCHES = [
-  { ver: "⚠ PERINGATAN", warn: true, date: "Sekarang", title: "DungeonHub Ditutup Sementara", items: [
-    "Aplikasi DungeonHub sedang ditutup untuk sementara waktu.",
-    "Uangnya di bawa mentri king mouse semua. Mohon maaf atas ketidaknyamanannya karena kami sedang mencari keberadaan Mentri king mouse.",
-    "Ini gimmik kecil sambil kami kembangkan DungeonOS ke versi 1.0."
-  ] },
   { ver: "v0.0.1", date: "Era Purba", title: "DungeonOS Purba", items: ["Boot screen muncul. Kadang. Kalau tidak, lihat background ungu.", "Home & app placeholder jadi. Tombol belum tahu harus kemana.", "Minion belum punya nama. Mereka cuma 'unit'."] },
   { ver: "v0.0.5", date: "31 Feb (katanya)", title: "Evil Management Suite", items: ["Tema neon ungu-magenta + kaca (glassmorphism) hadir.", "Status bar dengan jam & notifikasi. Boss merasa seperti punya HP sungguhan.", "Grid aplikasi rapi. Sayangnya app-nya masih kosong."] },
   { ver: "v0.1.0", date: "Hari Mogok I", title: "Mogok Mendekat", items: ["Cerita bercabang: pilihanmu mengubah jalan & ending.", "33 ending (10 biasa, 8 unik, 6 anomali, 5 plot-twist, 4 nested).", "Perbaiki layar kosong: animasi sekarang anti-stuck.", "DevConsole: /loop, /gravity, /ai, /meta, dan 'behind'.", "Satir masuk: 'Harga platinum naik jadi 18 gold? Orang dungeon kan gak pakai platinum!'"] },
@@ -207,6 +202,11 @@ const PATCHES = [
     "Roster, assignment & stok kini premium (glass, gradient, job board dengan toggle). Shift hanya jalankan job yang dicentang — lebih strategis & tidak membosankan.",
     "Semua minigame kini premium modern: glass card, gradient accent per job, timer, progress, feedback good/bad dengan animasi & sound.",
     "Stabilitas & performa: will-change, animasi GPU-friendly, anti-lag, Mode Hemat tetap tersedia."
+  ] },
+  { ver: "⚠ PERINGATAN", warn: true, date: "Sekarang", title: "DungeonHub Ditutup Sementara", items: [
+    "Aplikasi DungeonHub sedang ditutup untuk sementara waktu.",
+    "Uangnya di bawa mentri king mouse semua. Mohon maaf atas ketidaknyamanannya karena kami sedang mencari keberadaan Mentri king mouse.",
+    "Ini gimmik kecil sambil kami kembangkan DungeonOS ke versi 1.0."
   ] }
 ];
 
