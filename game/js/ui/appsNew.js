@@ -344,13 +344,19 @@ function checkLevel(st) {
     { id: "hemat", text: "HQ: Hemat tenaga — jangan bikin minion drop.", goldMul: 0.85, stamCost: 14, moraleCost: 8, ratingSwing: 0.8 },
     { id: "ekspansi", text: "HQ: Ekspansi cepat — cuan gede, risiko insiden naik.", goldMul: 1.3, stamCost: 26, moraleCost: 15, ratingSwing: 1.2, incBonus: 0.2 }
   ];
+  const EVIL_JOBS = [
+    { id: "ride", label: "Ojek Naga", sub: "Ride", icon: "rider", desc: "Antar penumpang & paket kilat. Macet, hujan, & pelanggan rewel.", color: "#34E7E4" },
+    { id: "food", label: "Dapur", sub: "Food", icon: "food", desc: "Masak & racik minuman. Pesanan ngantri, bahan menipis, komplain pedas.", color: "#FF7A00" },
+    { id: "toko", label: "Gudang", sub: "Mart", icon: "store", desc: "Sortir & kemas paket. Fragile, label salah, deadline mepet.", color: "#FFD86B" },
+    { id: "sec", label: "Keamanan", sub: "Guard", icon: "shield", desc: "Jaga brankas dari hero & monster lepas. Fokus tinggi.", color: "#FF5E7A" }
+  ];
   function rosterHtml(s) {
     const mins = s.hub.minions || [];
     return mins.map(m => `
-      <div class="rost-card">
-        <div class="rost-head"><b>${m.name}</b> <span class="rost-trait">${m.trait}</span></div>
-        <div class="rost-bar"><span>Morale</span><i class="${m.morale < 25 ? "crit" : ""}" style="width:${clamp(m.morale, 0, 100)}%"></i></div>
-        <div class="rost-bar"><span>Stamina</span><i class="${m.stamina < 25 ? "crit" : ""}" style="width:${clamp(m.stamina, 0, 100)}%"></i></div>
+      <div class="rost-card premium">
+        <div class="rost-head"><div class="rost-ava">${icon("minion")}</div><div><b>${m.name}</b><span class="rost-trait">${m.trait}</span><div class="rost-skill">Skill: R${m.skill.ride||0}·F${m.skill.food||0}·T${m.skill.toko||0}·S${m.skill.sec||0}</div></div></div>
+        <div class="rost-bar"><span>Morale</span><i class="${m.morale < 25 ? "crit" : m.morale < 50 ? "warn" : ""}" style="width:${clamp(m.morale, 0, 100)}%"></i><b>${m.morale}</b></div>
+        <div class="rost-bar"><span>Stamina</span><i class="${m.stamina < 25 ? "crit" : ""}" style="width:${clamp(m.stamina, 0, 100)}%"></i><b>${m.stamina}</b></div>
       </div>`).join("");
   }
   function assignHtml(s) {
@@ -359,15 +365,198 @@ function checkLevel(st) {
     const ids = ["ride", "food", "toko", "sec"];
     return ids.map(st2 => {
       const sel = a[st2];
+      const job = EVIL_JOBS.find(j=>j.id===st2);
       const opts = mins.map(m => `<button class="assign-btn ${sel === m.id ? "on" : ""} ${m.stamina <= 0 ? "off" : ""}" data-station="${st2}" data-min="${m.id}">${m.name}${m.stamina <= 0 ? " ⛔" : ""}</button>`).join("");
-      return `<div class="assign-row"><span class="assign-lab">${STATION_LABEL[st2]}</span><div class="assign-btns">${opts}</div></div>`;
+      return `<div class="assign-row premium"><span class="assign-lab" style="--c:${job.color}"><span class="assign-dot" style="background:${job.color}"></span>${job.label}</span><div class="assign-btns">${opts}</div></div>`;
     }).join("");
   }
   function stockHtml(s) {
     const stock = s.hub.stock || {};
     const ids = ["ride", "food", "toko", "sec"];
-    return ids.map(s2 => `<div class="stock-row"><span class="stock-lab">${STATION_LABEL[s2]}: <b>${stock[s2] || 0}</b></span><button class="restock-btn" data-stk="${s2}">+5 (4g)</button></div>`).join("");
+    return ids.map(s2 => {
+      const job = EVIL_JOBS.find(j=>j.id===s2);
+      const v = stock[s2] || 0;
+      const low = v <= 3;
+      return `<div class="stock-row premium" style="--c:${job.color}"><span class="stock-lab"><span class="stock-dot" style="background:${job.color}"></span>${job.label}: <b class="${low?'low':''}">${v}</b></span><button class="restock-btn" data-stk="${s2}">+5 (4g)</button></div>`;
+    }).join("");
   }
+  function jobBoardHtml(s) {
+    const enabled = s.hub.jobEnabled || { ride: true, food: true, toko: true, sec: true };
+    const stock = s.hub.stock || {};
+    const a = s.hub.assigned || {};
+    return EVIL_JOBS.map(j => {
+      const on = enabled[j.id];
+      const st = stock[j.id] || 0;
+      const min = (s.hub.minions||[]).find(m=>m.id===a[j.id]);
+      const stamina = min ? min.stamina : 0;
+      const morale = min ? min.morale : 0;
+      const canRun = on && a[j.id] && stamina>0 && st>0;
+      return `<div class="job-card ${on?'on':''} ${canRun?'':'disabled'}" data-job="${j.id}" style="--c:${j.color}">
+        <div class="job-head"><span class="job-ico">${icon(j.icon)}</span><div><b>${j.label}</b><span class="job-sub">${j.sub} · ${j.desc}</span></div><label class="job-toggle"><input type="checkbox" data-job-toggle="${j.id}" ${on?'checked':''}><span></span></label></div>
+        <div class="job-meta"><span class="job-min">${min?min.name:'—'} · S${stamina} M${morale}</span><span class="job-stock ${st<=3?'low':''}">Stok ${st}</span></div>
+        <div class="job-foot"><span class="job-hint">${canRun?'Siap shift':'Butuh minion/stok'}</span><span class="job-cost">-stock 1 · -stamina/morale</span></div>
+      </div>`;
+    }).join("");
+  }
+  // ============ PREMIUM PER-ACTION MINIGAMES (production, per-tombol) ============
+  const HUB_ACTION_GAMES = {
+    ride_go: { engine: "courier", title: "Dispatch Driver", icon: "rider", color: "#34E7E4", prompt: "Antar naga: hindari rintangan di rute ekspres" },
+    ride_vip: { engine: "timing", title: "VIP Dragonride", icon: "rider", color: "#FFD86B", prompt: "Jaga naga VIP tetap melayang stabil", lo: 36, hi: 64, speed: 1.8 },
+    ride_surge: { engine: "slider", title: "Surge Pricing", icon: "wallet", color: "#FF5E7A", prompt: "Setel surge 1.8x di zona hijau — jangan serakah" },
+    ride_corp: { engine: "quiz", title: "Akun Korporat", icon: "store", color: "#A855F7", questions: [{ q: "Klien korporat minta potongan 30%. Jawab?", opts: ["Setuju 30% (rugi)", "Tawarkan paket 15% + prioritas", "Tolak mentah"], correct: 1, hint: "Negosiasi butuh win-win" }] },
+    ride_night: { engine: "courier", title: "Shift Malam", icon: "rider", color: "#6B7280", prompt: "Rute malam: lampu minim, hindari lubang" },
+    ride_rate: { engine: "quiz", title: "Manipulasi Rating", icon: "star", color: "#FFD86B", questions: [{ q: "Review bintang 1: 'Dragon telat'. Balas?", opts: ["Hapus paksa", "Minta maaf + voucher + perbaiki", "Balas sarkas"], correct: 1 }] },
+    ride_green: { engine: "sort", title: "Mode Ramah Bumi", icon: "store", color: "#34D399", prompt: "Pisahkan sampah organik/anorganik untuk PR" },
+    food_send: { engine: "courier", title: "Kirim Makanan", icon: "food", color: "#FF7A00", prompt: "Antar makanan panas tepat waktu" },
+    food_5star: { engine: "quiz", title: "Paksa 5 Bintang", icon: "star", color: "#FFD86B", questions: [{ q: "Pelanggan kasih bintang 3. Paksa jadi 5?", opts: ["Ancam blokir", "Tawarkan dessert gratis jika berkenan revisi", "Beli bot review"], correct: 1, hint: "Paksa = cheating, tawarkan = etis" }] },
+    food_poison: { engine: "timing", title: "Makanan Beracun", icon: "skull", color: "#EF4444", prompt: "Sisip jebakan saat penjaga lengah — timing presisi", lo: 40, hi: 60, speed: 2.2 },
+    food_influ: { engine: "quiz", title: "Review Influencer", icon: "dungeongram", color: "#EC4899", questions: [{ q: "Influencer mau review pedas. Menu apa?", opts: ["Sajikan level 3 aman", "Paksa level 10 tanpa warning", "Tolak influencer"], correct: 0 }] },
+    food_portion: { engine: "slider", title: "Porsi Mini", icon: "food", color: "#F59E0B", prompt: "Atur porsi 'mini' di zona scam 30-45%" },
+    food_spicy: { engine: "timing", title: "Tantang Pedas", icon: "food", color: "#DC2626", prompt: "Tahan pedas: lepas di zona tahan", lo: 45, hi: 65, speed: 2.0 },
+    food_halal: { engine: "quiz", title: "Sertifikat Halal Palsu", icon: "shield", color: "#10B981", questions: [{ q: "Sertifikat mana yang valid?", opts: ["Stempel HQ palsu", "Sertifikat resmi MUI + audit", "Fotokopi buram"], correct: 1 }] },
+    mart_inflate: { engine: "slider", title: "Naikkan Harga", icon: "store", color: "#F59E0B", prompt: "Naikkan 20% di zona hijau — jangan over" },
+    mart_sub: { engine: "quiz", title: "Subscription Palsu", icon: "store", color: "#8B5CF6", questions: [{ q: "User klik 'x' tapi kejebak subscribe. Fix?", opts: ["Biarkan (cuan)", "Buat tombol batal jelas & konfirmasi", "Sembunyikan lagi"], correct: 1 }] },
+    mart_flash: { engine: "tap", title: "Flash Sale", icon: "bolt", color: "#FACC15", prompt: "Tap secepatnya tapi jaga ritme — anti-spam" },
+    mart_bundle: { engine: "sort", title: "Bundle Tipu", icon: "store", color: "#06B6D4", prompt: "Susun bundle yang jujur vs tipu — pilih yang adil" },
+    mart_member: { engine: "quiz", title: "Tier Membership", icon: "star", color: "#A855F7", questions: [{ q: "Member protes tier gak jelas. Solusi?", opts: ["Tambah tier lagi", "Sederhanakan 2 tier dengan benefit jelas", "Naikkan harga tier"], correct: 1 }] },
+    mart_glitch: { engine: "timing", title: "Glitch Harga", icon: "bolt", color: "#34E7E4", prompt: "Tangkap glitch di jendela 0.3s", lo: 42, hi: 58, speed: 2.8 },
+    pay_tax: { engine: "quiz", title: "Pajak Loot", icon: "wallet", color: "#6B7280", questions: [{ q: "Loot 100g, pajak 15% = ?", opts: ["10g", "15g", "25g"], correct: 1 }] },
+    pay_wallet: { engine: "slider", title: "Top-up Wallet", icon: "wallet", color: "#34D399", prompt: "Isi wallet pas 85% — jangan overfill" },
+    pay_cashback: { engine: "sort", title: "Promo Cashback", icon: "coin", color: "#F59E0B", prompt: "Cocokkan kode cashback valid vs palsu" },
+    pay_interest: { engine: "slider", title: "Bunga Pinjaman", icon: "wallet", color: "#EF4444", prompt: "Setel bunga 12% di zona hijau" },
+    pay_late: { engine: "timing", title: "Denda Telat", icon: "hourglass", color: "#F59E0B", prompt: "Hindari denda: tekan pas deadline", lo: 38, hi: 62, speed: 2.1 },
+    pay_ppob: { engine: "sort", title: "Bayar Tagihan Absurd", icon: "wallet", color: "#8B5CF6", prompt: "Urutkan tagihan: listrik > air > internet" }
+  };
+  function mgQuizPremium(gameEl, done, cfg) {
+    const qs = cfg.questions || [];
+    let idx = 0, score = 0, failed = false;
+    const total = qs.length;
+    const render = () => {
+      if (idx >= total) { done(failed ? 0 : score / total); return; }
+      const q = qs[idx];
+      gameEl.innerHTML = `<div class="mg-premium quiz">
+        <div class="mg-premium-head" style="--c:${cfg.color}"><span class="mg-premium-ico">${icon(cfg.icon)}</span><div><b>${cfg.title}</b><span>${cfg.prompt||""}</span></div><span class="mg-premium-step">${idx+1}/${total}</span></div>
+        <div class="mg-premium-timer"><i id="mg-bar" style="width:100%"></i></div>
+        <div class="mg-premium-q">${q.q}</div>
+        <div class="mg-premium-opts">${q.opts.map((o,i)=>`<button class="mg-opt" data-i="${i}">${o}</button>`).join("")}</div>
+        ${q.hint?`<div class="mg-premium-hint">${q.hint}</div>`:""}
+      </div>`;
+      const bar = gameEl.querySelector("#mg-bar");
+      let t = 100, timer = setInterval(()=>{ t-=2.5; if(bar) bar.style.width=t+"%"; if(t<=0){ clearInterval(timer); failed=true; gameEl.innerHTML=`<div class="mg-premium result bad">⏰ Waktu habis! Gagal — kamu tidak menjawab.</div>`; setTimeout(()=>done(0),700);} },80);
+      gameEl.querySelectorAll(".mg-opt").forEach(b=>b.addEventListener("click",()=>{
+        clearInterval(timer);
+        const pick = Number(b.dataset.i);
+        if(pick===q.correct){ score++; b.classList.add("good"); Sound.blip(); } else { failed=true; b.classList.add("bad"); const correctEl = gameEl.querySelectorAll(".mg-opt")[q.correct]; if(correctEl) correctEl.classList.add("good"); Sound.bad(); }
+        setTimeout(()=>{ idx++; render(); }, 600);
+      }));
+    };
+    render();
+  }
+  function mgSliderPremium(gameEl, done, cfg) {
+    const lo = cfg.lo ?? 38, hi = cfg.hi ?? 62, speed = cfg.speed ?? 1.9;
+    gameEl.innerHTML = `<div class="mg-premium slider" style="--c:${cfg.color}">
+      <div class="mg-premium-head"><span class="mg-premium-ico">${icon(cfg.icon)}</span><div><b>${cfg.title}</b><span>${cfg.prompt||"Stop di zona hijau"}</span></div></div>
+      <div class="mg-slider-track"><span class="mg-slider-zone" style="left:${lo}%;width:${hi-lo}%"></span><i class="mg-slider-mark"></i></div>
+      <button class="mg-premium-btn">STOP</button>
+      <div class="mg-premium-hint">Presisi = bonus, meleset = penalti</div>
+    </div>`;
+    const mark = gameEl.querySelector(".mg-slider-mark"), btn = gameEl.querySelector(".mg-premium-btn");
+    let pos=0, dir=1, raf=null, stopped=false;
+    const loop=()=>{ if(stopped) return; pos+=dir*speed; if(pos>=100){pos=100;dir=-1;} if(pos<=0){pos=0;dir=1;} mark.style.left=pos+"%"; raf=requestAnimationFrame(loop); };
+    loop();
+    btn.addEventListener("click",()=>{
+      if(stopped) return; stopped=true; cancelAnimationFrame(raf);
+      const ok = pos>=lo && pos<=hi;
+      btn.textContent = ok ? "✓ PRESISI!" : "✗ MELESET";
+      btn.classList.add(ok?"good":"bad");
+      if(ok) Sound.blip(); else Sound.bad();
+      setTimeout(()=>done(ok?1:0.2), 500);
+    });
+  }
+  function mgTimingPremium(gameEl, done, cfg) {
+    const lo = cfg.lo ?? 40, hi = cfg.hi ?? 60, speed = cfg.speed ?? 2.0;
+    gameEl.innerHTML = `<div class="mg-premium timing" style="--c:${cfg.color}">
+      <div class="mg-premium-head"><span class="mg-premium-ico">${icon(cfg.icon)}</span><div><b>${cfg.title}</b><span>${cfg.prompt||"Tahan & lepas di zona"}</span></div></div>
+      <div class="mg-timing-track"><span class="mg-timing-zone" style="left:${lo}%;width:${hi-lo}%"></span><i class="mg-timing-mark"></i></div>
+      <button class="mg-premium-btn hold">TAHAN</button>
+    </div>`;
+    const mark = gameEl.querySelector(".mg-timing-mark"), btn = gameEl.querySelector(".mg-premium-btn");
+    let pos=0, dir=1, raf=null, holding=false;
+    const loop=()=>{ pos+=dir*speed; if(pos>=100){pos=100;dir=-1;} if(pos<=0){pos=0;dir=1;} mark.style.left=pos+"%"; raf=requestAnimationFrame(loop); };
+    loop();
+    const finish=(ok)=>{
+      cancelAnimationFrame(raf);
+      btn.textContent = ok ? "✓ SEMPURNA" : "✗ GAGAL";
+      btn.classList.add(ok?"good":"bad");
+      if(ok) Sound.blip(); else Sound.bad();
+      setTimeout(()=>done(ok?1:0), 600);
+    };
+    btn.addEventListener("pointerdown",()=>{ holding=true; });
+    btn.addEventListener("pointerup",()=>{ if(!holding) return; holding=false; const ok = pos>=lo && pos<=hi; finish(ok); });
+    btn.addEventListener("pointerleave",()=>{ if(holding) { holding=false; finish(false); } });
+  }
+  function mgSortPremium(gameEl, done, cfg) {
+    const bins = cfg.bins || [{label:"A",color:"#34E7E4"},{label:"B",color:"#FF7A00"},{label:"C",color:"#FFD86B"}];
+    const items = cfg.items || Array.from({length:6},(_,i)=>({label:"Item "+(i+1), bin: i%3, icon: "store"}));
+    let idx=0, score=0;
+    const render=()=>{
+      if(idx>=items.length){ done(score/items.length); return; }
+      const it = items[idx];
+      gameEl.innerHTML = `<div class="mg-premium sort" style="--c:${cfg.color}">
+        <div class="mg-premium-head"><span class="mg-premium-ico">${icon(cfg.icon)}</span><div><b>${cfg.title}</b><span>${cfg.prompt||"Sortir dengan benar"}</span></div><span class="mg-premium-step">${idx+1}/${items.length}</span></div>
+        <div class="mg-sort-item">${icon(it.icon)}<b>${it.label}</b><span>${it.desc||""}</span></div>
+        <div class="mg-sort-bins">${bins.map((b,i)=>`<button class="mg-bin" data-bin="${i}" style="--bc:${b.color}">${b.label}</button>`).join("")}</div>
+      </div>`;
+      gameEl.querySelectorAll(".mg-bin").forEach(b=>b.addEventListener("click",()=>{
+        const pick = Number(b.dataset.bin);
+        if(pick===it.bin){ score++; b.classList.add("good"); Sound.blip(); } else { b.classList.add("bad"); Sound.bad(); }
+        setTimeout(()=>{ idx++; render(); }, 400);
+      }));
+    };
+    render();
+  }
+  function mgTapPremium(gameEl, done, cfg) {
+    const N = 12; let n=0, hits=0, lastTap=0;
+    gameEl.innerHTML = `<div class="mg-premium tap" style="--c:${cfg.color}">
+      <div class="mg-premium-head"><span class="mg-premium-ico">${icon(cfg.icon)}</span><div><b>${cfg.title}</b><span>${cfg.prompt||"Tap ritme, jangan spam"}</span></div></div>
+      <div class="mg-tap-area"><button class="mg-tap-btn">TAP!</button><div class="mg-tap-hint">Tap ${N}x dengan jeda 180-500ms</div></div>
+      <div class="mg-premium-progress"><i style="width:${0}%"></i><span>${n}/${N}</span></div>
+    </div>`;
+    const btn = gameEl.querySelector(".mg-tap-btn"), bar = gameEl.querySelector(".mg-premium-progress i"), cnt = gameEl.querySelector(".mg-premium-progress span");
+    btn.addEventListener("click",()=>{
+      const now = Date.now();
+      const diff = now - lastTap;
+      if(lastTap && diff < 140){ // anti-spam
+        gameEl.querySelector(".mg-tap-hint").textContent = "Jangan spam! Pelan.";
+        Sound.bad(); return;
+      }
+      if(lastTap && diff > 600){ hits = Math.max(0, hits-1); }
+      else if(n>0) hits++;
+      lastTap = now; n++;
+      bar.style.width = (n/N*100)+"%"; cnt.textContent = n+"/"+N;
+      btn.classList.add("active"); setTimeout(()=>btn.classList.remove("active"),120);
+      Sound.blip();
+      if(n>=N) setTimeout(()=>done(hits/N), 400);
+    });
+  }
+  function playActionGame(actionId, gameEl, done) {
+    const cfg = HUB_ACTION_GAMES[actionId];
+    if(!cfg){ // fallback per-mod
+      const st = getState(); const a = HUB_ACTIONS.find(x=>x.id===actionId); const mod = a ? a.mod : "ride";
+      return playJobGame(mod, gameEl, done);
+    }
+    const wrap = (sc)=>{ // premium result wrapper with anti-cheat: if score low, extra penalty will be handled by caller
+      done(Math.max(0, Math.min(1, sc)));
+    };
+    if(cfg.engine==="courier") return mgCourier(gameEl, wrap);
+    if(cfg.engine==="timing") return mgTimingPremium(gameEl, wrap, cfg);
+    if(cfg.engine==="slider") return mgSliderPremium(gameEl, wrap, cfg);
+    if(cfg.engine==="quiz") return mgQuizPremium(gameEl, wrap, cfg);
+    if(cfg.engine==="sort") return mgSortPremium(gameEl, wrap, { ...cfg, bins: cfg.bins || [{label:"Benar",color:cfg.color},{label:"Salah",color:"#6B7280"}], items: cfg.items || [{label:"Pilihan A",bin:0,icon:cfg.icon},{label:"Pilihan B",bin:1,icon:cfg.icon}] });
+    if(cfg.engine==="tap") return mgTapPremium(gameEl, wrap, cfg);
+    return mgQuizPremium(gameEl, wrap, cfg);
+  }
+
   function dispatchGame(gameEl, total, done) {
     gameEl.innerHTML = `<div class="ops-mini"><div class="ops-serve" id="ops-serve">${icon("minion")}<span>LAYANI!</span></div><div class="ops-info">Terlayani: <b id="ops-served">0</b>/${total}</div></div>`;
     const serve = gameEl.querySelector("#ops-serve");
@@ -582,10 +771,13 @@ function checkLevel(st) {
     const stock = st.hub.stock || {};
     const ids = ["ride", "food", "toko", "sec"];
     const log = (txt, cls) => { const d = document.createElement("div"); d.className = "ops-msg " + (cls || ""); d.textContent = txt; out.appendChild(d); out.scrollTop = out.scrollHeight; };
-    const okAssign = ids.every(s2 => a[s2] && mins.find(m => m.id === a[s2] && (m.stamina || 0) > 0));
-    if (!okAssign) { log("Assign tiap stasiun dengan minion yg stamina > 0 dulu.", "bad"); return; }
-    const activeIds = ids.filter(s2 => { const m = mins.find(x => x.id === a[s2]); return m && (stock[s2] || 0) > 0; });
-    if (activeIds.length === 0) { log("Semua stasiun kehabisan stok! Restock dulu (atau tunggu hari baru).", "bad"); return; }
+    const enabled = st.hub.jobEnabled || { ride: true, food: true, toko: true, sec: true };
+    const enabledIds = ids.filter(id => enabled[id]);
+    if (enabledIds.length === 0) { log("Centang minimal 1 pekerjaan di papan pekerjaan.", "bad"); return; }
+    const okAssign = enabledIds.every(s2 => a[s2] && mins.find(m => m.id === a[s2] && (m.stamina || 0) > 0));
+    if (!okAssign) { log("Assign minion untuk setiap pekerjaan yang dicentang (stamina >0).", "bad"); return; }
+    const activeIds = enabledIds.filter(s2 => { const m = mins.find(x => x.id === a[s2]); return m && (stock[s2] || 0) > 0; });
+    if (activeIds.length === 0) { log("Semua job terpilih kehabisan stok! Restock dulu (atau tunggu hari baru).", "bad"); return; }
     const dir = HUB_DIRECTIVES[Math.floor(Math.random() * HUB_DIRECTIVES.length)];
     mutate(s2 => { s2.hub.directive = { id: dir.id, text: dir.text }; });
     const prodStations = activeIds.filter(s2 => ["ride", "food", "toko"].includes(s2));
@@ -666,11 +858,12 @@ function checkLevel(st) {
    const acts = HUB_ACTIONS.filter(a => a.mod === tab).map(a =>
      `<button class="hub-act ${noEnergy ? "disabled" : ""}" data-act="${a.id}" ${noEnergy ? "disabled" : ""}>${a.label}</button>`).join("");
     const q = HUB_QUESTS[(s.hub.questIdx || 0) % HUB_QUESTS.length];
-    const roster = rosterHtml(s);
-    const assign = assignHtml(s);
-    const stock = stockHtml(s);
-    const directive = s.hub.directive ? `<div class="ops-dir">📡 ${s.hub.directive.text}</div>` : "";
-    const lastShift = s.hub.lastShift ? `<div class="ops-last">Shift terakhir: layani <b>${s.hub.lastShift.served}</b>/${s.hub.lastShift.total}, +${s.hub.lastShift.gold}g${s.hub.lastShift.incident ? (s.hub.lastShift.ok ? " · segel +20g" : " · monster lolos -rating") : ""}</div>` : "";
+     const roster = rosterHtml(s);
+     const assign = assignHtml(s);
+     const stock = stockHtml(s);
+     const jobBoard = jobBoardHtml(s);
+     const directive = s.hub.directive ? `<div class="ops-dir">📡 ${s.hub.directive.text}</div>` : "";
+     const lastShift = s.hub.lastShift ? `<div class="ops-last">Shift terakhir: layani <b>${s.hub.lastShift.served}</b>/${s.hub.lastShift.total}, +${s.hub.lastShift.gold}g${s.hub.lastShift.incident ? (s.hub.lastShift.ok ? " · segel +20g" : " · monster lolos -rating") : ""}</div>` : "";
     return {
     body: `
       <div class="hub-wrap">
@@ -690,17 +883,20 @@ function checkLevel(st) {
        </div>
          <div class="hub-actions">${acts}</div>
          <div id="hub-action-out" class="hub-shift-out"></div>
-         <div class="hub-ops">
-          <div class="hub-ops-head">${icon("skull")}<span>EVIL OPS · Mode Per-Shift (Fase 1+2)</span></div>
-          <div class="roster">${roster}</div>
-          <div class="assign">${assign}</div>
-          <div class="stock-head">STOK & RESTOCK (tiap shift habis 1/stasiun aktif)</div>
-          <div class="stock">${stock}</div>
-          <button class="action-btn hub-shift" id="hub-shift">${icon("bolt")}<span>Mulai Shift</span></button>
-          ${directive}
-          <div id="hub-shift-out" class="hub-shift-out"></div>
-          ${lastShift}
-        </div>
+          <div class="hub-ops premium">
+           <div class="hub-ops-head">${icon("shield")}<span>EVIL OPS · Produksi</span><span class="hub-ops-badge">PRODUCTION</span></div>
+           <div class="hub-ops-sub">Pilih pekerjaan untuk shift berikutnya — hanya pekerjaan aktif yang menguras stamina & stok dan memainkan minigame-nya.</div>
+           <div class="roster">${roster}</div>
+           <div class="assign">${assign}</div>
+           <div class="stock-head">STOK & RESTOCK (tiap shift habis 1/job aktif)</div>
+           <div class="stock">${stock}</div>
+           <div class="job-board-head">PAPAN PEKERJAAN — centang job yang mau dijalankan</div>
+           <div class="job-board">${jobBoard}</div>
+           <button class="action-btn hub-shift premium" id="hub-shift">${icon("bolt")}<span>Mulai Shift Terpilih</span></button>
+           ${directive}
+           <div id="hub-shift-out" class="hub-shift-out"></div>
+           ${lastShift}
+         </div>
         </div>`,
      mount(screen, state, handlers) {
        screen.querySelectorAll(".hub-tab").forEach(b => b.addEventListener("click", () => {
@@ -716,11 +912,19 @@ function checkLevel(st) {
             if (energy <= 0) { toast("Energi habis. Tunggu hari baru.", { ico: "bolt", cls: "toast-bad" }); return; }
             const aout = screen.querySelector("#hub-action-out");
             if (aout) aout.innerHTML = "";
-            playJobGame(a.mod, aout, (raw) => {
+            playActionGame(a.id, aout, (raw) => {
               const sc = clamp(raw, 0, 1);
+              const isFail = sc < 0.5;
               let audited = false;
               mutate(st => {
                 st.hub.energy = (st.hub.energy == null ? 14 : st.hub.energy) - 1;
+                if (isFail) {
+                  // anti-cheat: gagal = harus mikir, ada penalti nyata
+                  st.stats.reputation = clamp(st.stats.reputation - 2, 0, 100);
+                  st.stats.morale = clamp(st.stats.morale - 3, 0, 100);
+                  st.hub.rating = clamp(st.hub.rating - 0.08, 0, 5);
+                  toast("Gagal! " + a.label + " butuh jawaban benar — coba pahami tugasnya.", { ico: "skull", cls: "toast-bad" });
+                }
                 const base = a.run(st) || {};
                 const r = {};
                 for (const k in base) { const v = base[k]; r[k] = (typeof v === "number") ? (["g", "x", "loot", "rep", "hero", "union", "stab", "morale"].includes(k) ? Math.round(v * sc) : v * sc) : v; }
@@ -736,7 +940,7 @@ function checkLevel(st) {
                 checkLevel(st);
                 if (!st.hub.auditedToday && (st.hub.dayEarned || 0) > 160) { auditPenalty(st); audited = true; }
               });
-              if (aout) aout.innerHTML = `<div class="ops-msg ${sc > 0.5 ? "good" : "warn"}">${a.label}: ${Math.round(sc * 100)}% berhasil.</div>`;
+              if (aout) aout.innerHTML = `<div class="ops-msg ${isFail ? "bad" : sc > 0.75 ? "good" : "warn"}">${a.label}: ${isFail ? "GAGAL" : "BERHASIL"} ${Math.round(sc * 100)}% ${isFail ? "· penalti -rep -morale" : ""}</div>`;
               markHubExhaustion();
               if (checkHubGrind(handlers)) return;
               if (audited) {
@@ -781,6 +985,11 @@ function checkLevel(st) {
           let ok = false;
           mutate(st => { const c = 4; if (st.stats.gold >= c) { st.stats.gold -= c; st.hub.stock[b.dataset.stk] = clamp((st.hub.stock[b.dataset.stk] || 0) + 5, 0, 99); ok = true; } });
           if (!ok) toast("Gold kurang buat restock.", { ico: "coin", cls: "toast-bad" });
+          handlers.rerender();
+        }));
+        screen.querySelectorAll("[data-job-toggle]").forEach(cb => cb.addEventListener("change", () => {
+          Sound.tap();
+          mutate(st => { if (!st.hub.jobEnabled) st.hub.jobEnabled = { ride: true, food: true, toko: true, sec: true }; st.hub.jobEnabled[cb.dataset.jobToggle] = cb.checked; });
           handlers.rerender();
         }));
         const shiftBtn = screen.querySelector("#hub-shift");

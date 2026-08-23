@@ -215,7 +215,7 @@ function migrate(s) {
   if (!s.hub || typeof s.hub !== "object") s.hub = {
     tab: "ride", rating: 4.8, rides: 0, foods: 0, mart: 0, pay: 0, earned: 0, level: 1, xp: 0,
     questIdx: 0, energy: 14, dayEarned: 0, audit: 0, questDone: 0, sinceEvent: 0, auditedToday: false,
-    exhaustedDays: {}, minions: defaultHubMinions(), assigned: { ride: "m1", food: "m2", toko: "m3", sec: "m4" }, shiftDay: 1, strikeWarned: 0, stock: { ride: 10, food: 10, toko: 10, sec: 10 }, directive: null
+    exhaustedDays: {}, minions: defaultHubMinions(), assigned: { ride: "m1", food: "m2", toko: "m3", sec: "m4" }, shiftDay: 1, strikeWarned: 0, stock: { ride: 10, food: 10, toko: 10, sec: 10 }, directive: null, jobEnabled: { ride: true, food: true, toko: true, sec: true }
   };
   if (s.hub && !s.hub.minions) s.hub.minions = defaultHubMinions();
   if (s.hub && !s.hub.assigned) s.hub.assigned = { ride: "m1", food: "m2", toko: "m3", sec: "m4" };
@@ -223,6 +223,7 @@ function migrate(s) {
   if (s.hub && s.hub.strikeWarned == null) s.hub.strikeWarned = 0;
   if (s.hub && !s.hub.stock) s.hub.stock = { ride: 10, food: 10, toko: 10, sec: 10 };
   if (s.hub && s.hub.directive == null) s.hub.directive = null;
+  if (s.hub && !s.hub.jobEnabled) s.hub.jobEnabled = { ride: true, food: true, toko: true, sec: true };
   if (!s.heroalert || typeof s.heroalert !== "object") s.heroalert = { level: 2 };
   if (s.flags && s.flags.lowPerf === undefined) s.flags.lowPerf = false;
   if (!s.tokooren || typeof s.tokooren !== "object") s.tokooren = { bought: 0, broken: 0 };

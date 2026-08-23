@@ -150,6 +150,11 @@ const ROSTER = [
 
 // Catatan rilis, dari yang paling lama -> terbaru.
 const PATCHES = [
+  { ver: "⚠ PERINGATAN", warn: true, date: "Sekarang", title: "DungeonHub Ditutup Sementara", items: [
+    "Aplikasi DungeonHub sedang ditutup untuk sementara waktu.",
+    "Uangnya di bawa mentri king mouse semua. Mohon maaf atas ketidaknyamanannya karena kami sedang mencari keberadaan Mentri king mouse.",
+    "Ini gimmik kecil sambil kami kembangkan DungeonOS ke versi 1.0."
+  ] },
   { ver: "v0.0.1", date: "Era Purba", title: "DungeonOS Purba", items: ["Boot screen muncul. Kadang. Kalau tidak, lihat background ungu.", "Home & app placeholder jadi. Tombol belum tahu harus kemana.", "Minion belum punya nama. Mereka cuma 'unit'."] },
   { ver: "v0.0.5", date: "31 Feb (katanya)", title: "Evil Management Suite", items: ["Tema neon ungu-magenta + kaca (glassmorphism) hadir.", "Status bar dengan jam & notifikasi. Boss merasa seperti punya HP sungguhan.", "Grid aplikasi rapi. Sayangnya app-nya masih kosong."] },
   { ver: "v0.1.0", date: "Hari Mogok I", title: "Mogok Mendekat", items: ["Cerita bercabang: pilihanmu mengubah jalan & ending.", "33 ending (10 biasa, 8 unik, 6 anomali, 5 plot-twist, 4 nested).", "Perbaiki layar kosong: animasi sekarang anti-stuck.", "DevConsole: /loop, /gravity, /ai, /meta, dan 'behind'.", "Satir masuk: 'Harga platinum naik jadi 18 gold? Orang dungeon kan gak pakai platinum!'"] },
@@ -193,6 +198,15 @@ const PATCHES = [
     "DungeonSlots: revamp total — 'Top Up ALL' (ubah semua gold jadi saldo), taruhan 1x/2x/5x/10x/ALL-IN, & simbol jadi berarti (3 SAMA = menang, tiap ikon punya nilai x3/x5/x8/x10/x12). Uang jadi gampang habis.",
     "Aplikasi baru (placeholder): Monopoli — masih dibahas mau dibuat atau tidak; berisi pesan bercanda.",
     "DungeonHub 'Evil Ops' (BESAR): konsep SELESAI & DISSETUJUI (seimbang + per-shift + boleh kalah). FASE 1+2+3 MASUK: loop per-shift, roster minion + morale/stamina, supply chain (stok + restock gold), directive HQ, & ending 'Mogok Besar' (boleh kalah). Mini-game PER-JOB: Kurir (perjalanan dgn 24 rintangan/gimmick), Dapur (susun pesanan) / Bar (tuang pas), Toko (sortir kemas), Keuangan (stempel pas), & Segel Rune (tangani insiden) — tiap tombol aksi & tiap stasiun shift punya mini-gamenya sendiri."
+  ] },
+  { ver: "v0.4.7-final", date: "Hari Ini", title: "DungeonHub Production — Evil OPS Final", items: [
+    "DungeonHub bukan prototipe lagi: upgrade produksi penuh — premium, modern, anti-asal-jadi.",
+    "28 aksi kini punya minigame sendiri-sendiri (bukan per kategori): 'Paksa 5 Bintang' = debat persuasif, 'Surge Pricing' = slider presisi, 'Makanan Beracun' = timing stealth, dll. — tiap tombol sesuai labelnya, tidak aneh lagi.",
+    "Anti-cheat & anti-spam: harus jawab benar/mikir — gagal = penalti nyata (-rep -morale -rating), tidak bisa spam asal tap.",
+    "Evil OPS skala besar dirombak: boring & tidak relate → papan pekerjaan relatable (Ojek Naga, Dapur, Gudang, Keamanan) dengan deskripsi & gimmick harian. Stok, stamina & minigame kini per-pekerjaan: kalau cuma Ojek ya cuma Ojek yang terkuras, kalau Masak & Antar ya hanya itu.",
+    "Roster, assignment & stok kini premium (glass, gradient, job board dengan toggle). Shift hanya jalankan job yang dicentang — lebih strategis & tidak membosankan.",
+    "Semua minigame kini premium modern: glass card, gradient accent per job, timer, progress, feedback good/bad dengan animasi & sound.",
+    "Stabilitas & performa: will-change, animasi GPU-friendly, anti-lag, Mode Hemat tetap tersedia."
   ] }
 ];
 
@@ -799,7 +813,7 @@ const APP_VIEWS = {
 
   patchnote() {
     const list = PATCHES.map((p, i) => `
-      <div class="patch ${i === PATCHES.length - 1 ? "latest" : ""}">
+      <div class="patch ${i === PATCHES.length - 1 ? "latest" : ""} ${p.warn ? "warn" : ""}">
         <div class="patch-head"><span class="patch-ver">${p.ver}</span><span class="patch-date">${p.date}</span></div>
         <div class="patch-title">${p.title}</div>
         <ul class="patch-items">${p.items.map(t => `<li>${t}</li>`).join("")}</ul>
@@ -1239,6 +1253,26 @@ export function renderApp(screen, state, handlers) {
     if (back) back.addEventListener("click", () => handlers.back());
     const buy = screen.querySelector("[data-buy]");
     if (buy) buy.addEventListener("click", () => { Sound.tap(); handlers.openApp(buy.dataset.buy); });
+    return;
+  }
+
+  // DungeonHub ditutup sementara (gimmik transisi ke v1).
+  if (app && app.id === "dungeonhub") {
+    screen.innerHTML = `
+      <div class="app-screen">
+        <div class="topbar">
+          <button class="ghost-btn" data-back>${icon("back")} Beranda</button>
+          <div class="app-title" style="color:${appAccent}">${icon(app ? app.icon : "settings")} ${appName}</div>
+        </div>
+        <div class="app-desc">${appDesc}</div>
+        <div class="hub-closed">
+          <div class="hub-closed-badge">⚠ DITUTUP SEMENTARA</div>
+          <p class="hub-closed-msg">Aplikasi DungeonHub sedang ditutup untuk sementara waktu.</p>
+          <div class="hub-closed-quote">Uangnya di bawa mentri king mouse semua. Mohon maaf atas ketidaknyamanannya karena kami sedang mencari keberadaan Mentri king mouse</div>
+        </div>
+      </div>`;
+    const back = screen.querySelector("[data-back]");
+    if (back) back.addEventListener("click", () => handlers.back());
     return;
   }
 
