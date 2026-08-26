@@ -1,6 +1,8 @@
 import { getState, mutate, setEnding } from "./state.js";
 import { getNode, START_NODE } from "./content/story.js";
 import { evaluateEnding } from "./content/endings.js";
+import { emit } from "./core/eventBus.js";
+import { clamp } from "./core/util.js";
 
 const CLAMPED = ["morale", "stability", "reputation", "unionPower", "devSuspicion"];
 
@@ -55,6 +57,7 @@ function enter(st, id) {
       ["ride", "food", "toko", "sec"].forEach(k => { sk[k] = clamp((sk[k] || 0) + 2, 0, 99); });
       st.hub.directive = null;
     }
+    emit("day:new", { day: st.day });
   }
   clampStats(st);
 }

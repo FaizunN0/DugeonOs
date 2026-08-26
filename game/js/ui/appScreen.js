@@ -6,7 +6,9 @@ import { staggerIn, moBurst, syncPerf } from "./anim.js";
 import { Lib, Sound, rand } from "../lib.js";
 import { triggerGlitch } from "./glitch.js";
 import { emitStatToasts, toast } from "./toast.js";
-import { NEW_VIEWS, NEW_RENDERFEED } from "./appsNew.js";
+import { NEW_VIEWS, NEW_RENDERFEED } from "../apps/index.js";
+import { MEMES } from "../content/memes.js";
+import { bindLiveGold } from "./kit/live.js";
 
 // Popup modal ringan (bukan error) untuk gimmick & satir.
 export function showPopup(title, html, btn) {
@@ -207,6 +209,63 @@ const PATCHES = [
     "Aplikasi DungeonHub sedang ditutup untuk sementara waktu.",
     "Uangnya di bawa mentri king mouse semua. Mohon maaf atas ketidaknyamanannya karena kami sedang mencari keberadaan Mentri king mouse.",
     "Ini gimmik kecil sambil kami kembangkan DungeonOS ke versi 1.0."
+  ] },
+  { ver: "DEV-PREVIEW", date: "Fase 1", title: "Operasional HQ Membuka Pintu", items: [
+    "DungeonHub buka lagi dengan wajah baru: OPERASIONAL HQ — jam dunia real-time (pagi/siang/sore/malam) dengan jeda & kecepatan 2x/4x.",
+    "MinionCorp: roster pegawai beneran — gaji harian otomatis, stamina & morale hidup, mogok kalau terlalu dieksploitasi.",
+    "HRD Gila: wawancara kerja absurd untuk merekrut kandidat baru. Tidak ada jawaban salah, cuma jawaban yang bikin HRD curiga.",
+    "Laporan keuangan per hari operasional: masuk, payroll, net. Kalau kas kurang saat gajian... selamat menghadapi serikat."
+  ] },
+  { ver: "DEV-PREVIEW 2", date: "Fase 2", title: "BangunRuang & Raid Defense", items: [
+    "App baru BangunRuang: grid lorong 5x4 — tanam Trap Bawang, Duri, Ilusi (pelambat), sampai Napalm Naga Mini di jalur hero.",
+    "Raid Uji real-time: gelombang hero (Sir Rembes, Panji Panahan, Baja Tebal 🗿, Kaki Cepat) menyusuri lorongmu; mati = bounty, lolos = brankas dicongkel.",
+    "Ekonomi tersambung: beli trap mengeluarkan kas, bounty menambah kas, hero yang lolos mencuri 30g & merusak reputasi.",
+    "Cabut trap dapat refund 50% — rahasia departemen keuangan yang tidak boleh disebar."
+  ] },
+  { ver: "DEV-PREVIEW 3", date: "Fase 3", title: "Campaign, Faksi & Si Tikus Berjubah", items: [
+    "Campaign berbab: tiap milestone hari operasional muncul babak keputusan (rapat KPI, inspeksi HQ, tuntutan gaji, petisi hero, audit besar) — pilihanmu mengubah rule simulasi beneran.",
+    "Relasi Faksi hidup: HQ, Serikat, Guild Hero & Kultus Grem punya trust yang bergeser tiap hari — menentukan payroll, tebal zirah hero saat raid, dan kelonggaran audit.",
+    "Ending v1.0: Pailit (gaji telat 3 hari), Republik Minion (semua pegawai mogok serempak) — kalah itu nyata sekarang.",
+    "RAHASIA: setelah Op#6, mata-matailah pool HRD. Sosok berjubah kadang melamar kerja. Gajinya absurd. Konsekuensinya... coba sendiri."
+  ] },
+  { ver: "v1.0.0", date: "Hari Ini", title: "BOSS SEJATI — Lompatan Besar Selesai", items: [
+    "Dari visual novel jadi Dungeon Management Simulator: jam dunia real-time, ekonomi satu dompet dengan laporan keuangan akurat, roster pegawai hidup, raid tower-defense & dungeon builder.",
+    "Prestige MERGER & AKUISISI: jual perusahaan (dinilai dari kas, pegawai, trap, reputasi, faksi) → Saham → perk permanen (Modal Warisan, Reputasi Merek, SDM Unggul, Jaringan Pemasok) untuk semua run berikutnya.",
+    "Musim operasional 12-hari: Jumat Berkah Bawang (+25% income), Purnama Pemberani (hero +30% HP), Musim Audit — banner muncul di HQ.",
+    "Balancing besar: gaji trait turun ~35%, rate kerja naik 2x, upeti lorong pasif, ledger mencatat SEMUA sumber gold tanpa kecuali.",
+    "Arsitektur modular penuh (core/systems/apps/content), save skema v7, Museum Perusahaan merekam tiap era perusahaanmu.",
+    "33 ending lama tetap bisa diburu lewat cerita; 3 ending baru v1 menunggu bos yang cukup nekat. Mentri King Mouse? Dia lebih dekat dari dugaanmu."
+  ] },
+  { ver: "v1.1-W1", date: "APP RENEWAL · Wave 1", title: "Flappy Lorong, Bengkel Rune & Kota Fantasi", items: [
+    "GOLD KINI LIVE DI SEMUA APP: satu dompet, angka bergerak real-time di mana pun (fondasi kit baru).",
+    "Flappy v2 'Terbang Lorong': lorong dungeon beneran — pilar trap 🧅, naga melintas 🐉, kenari serikat bawa spanduk. Medal 🥉50 🥈150 🥇300. 👑 Skor 500 = ENDING RAJA BURUNG.",
+    "RuneForge v2 'Bengkel Rune': fisika diganti crafting — bahan drop 35% dari hero yang tumbang di BangunRuang; tempa Rune Semangat/Kasir/Pelindung dengan buff sim nyata (slot aktif 2); gagal = meledak & bahan lenyap.",
+    "Monopoli premium gimmick: Kota Dungeon dijual duluan, countdown rilis yang selalu reset sendiri, tombol pre-order dengan alasan gagal bergilir, testimoni M. King Mouse. Tetap bukan game — memang disengaja."
+  ] },
+  { ver: "v1.1-W2", date: "APP RENEWAL · Wave 2", title: "Commerce Kit — Belanja Kayak Orang Sipil", items: [
+    "TrapMart jadi e-commerce beneran: katalog produk dengan review ⭐⭐⭐⭐⭐ palsu ('Trapnya bekerja. Korban: saya.'), KERANJANG + checkout, dan tab Rak & Layanan untuk mekanik lama (upgrade, auto-defense, slot).",
+    "STOK TERSINKRON: semua trap yang dibeli masuk GUDANG dan dipakai BangunRuang — pasang dari stok gratis; kalau kosong, tersedia opsi beli darurat langsung di grid.",
+    "Toko Oren identitas baru 'Murah Meriah': badge diskon -72%, harga coret dramatis, garansi 3 detik, dan risiko rusak kini ditampilkan JUJUR (karena tidak punya pilihan lain). Reputasi kejujuran toko dihitung real-time.",
+    "Bonus Monopoli: muncul pesan berbisik yang menonjol 🤫 soal seseorang bermain 20 putaran tanpa kelar-kelar. Konon."
+  ] },
+  { ver: "v1.1-W3", date: "APP RENEWAL · Wave 3", title: "Intelijen & Sosial — Dungeon Kini Punya Gosip", items: [
+    "HeroAlert v2: SERGAP refleks dimusnahkan, lahir INTEROGASI KARTU BUKTI — baca mood tersangka (😡😅😏), pilih pendekatan tepat (Teh Hangat/Tekan/Bukti), reward intelijen nyata. Radar kini menampilkan ancaman raid sungguhan (musim + kemarahan Guild).",
+    "CCTV v2: monitor menyiarkan REKAMAN HIDUP simulasi (raid, mogok, gajian, merger) dengan jam real-time per kamera; scan harian & anomali tetap.",
+    "DungeonGram v2: postingan otomatis lahir dari event dungeon — like pertama menggeser trust faksi, komentar pilihan HRD ikut menggeser.",
+    "UnionDesk v2: papan memo resmi serikat dari feed peristiwa + Formulir Komplain Resmi (1x/hari operasional, trust serikat +2, arsipnya rahasia negara)."
+  ] },
+  { ver: "v1.1-W4", date: "APP RENEWAL · Wave 4", title: "Personalia & Lore — Dungeon Punya Memori", items: [
+    "MinionApp jadi PERSONALIA HR: profil tiap pegawai (CV asli trait, kontrak, masa kerja, bar morale), sparkline net keuangan 7 hari, dan SURAT PRIBADI minion untuk bos — tiap trait punya isinya sendiri.",
+    "Codex dinamis: monster raid yang tumbang tercatat otomatis (Sir Rembes & kawan ditumbangkan berapa kali), dan halaman Rahasia M. King Mouse menolak dibaca... sampai kamu tahu caranya.",
+    "Ramalan & Orakel tidak lagi menggibeng: mereka membaca LEDGER-mu beneran — tren net, risiko mogok, musim esok, sampai estimasi 'hari kas minus'. Menyeramkan karena akurat.",
+    "Faksi org-chart hidup: trust live per cabang + riwayat peristiwa + Kirim Hadiah 20g (+3 trust, sekali sehari, namanya anggaran diplomasi)."
+  ] },
+  { ver: "v1.1.0", date: "APP RENEWAL · FINAL", title: "v1.1 RESMI — Semua Aplikasi Baru", items: [
+    "SoundStone v2: NOW-PLAYING BAR dengan ekualiser hidup (mati di Mode Hemat), kontrol BGM procedural & chord pad dirapikan jadi satu panggung.",
+    "BawangPedia v2: layout MAJALAH — cover story meme utama, kolom editorial berkategori (Ekonomi/Politik/Kuliner/Absurd/Teknologi) + Kotak Meme Pembaca.",
+    "Bazzaar v2: butik premium yang meyakinkan — KOSONG SIGNATURE™ edisi terbatas selamanya, waitlist prestige yang tumbuh konsisten, dan concierge yang bergosip tiap 5 detik.",
+    "Fondasi lintas app: Gold Live-Time di semua layar, kit UI (LiveGold/Sheet/Subnav/PriceTag/EmptyState/mgSession), standar mini-game anti-bug, feed sosial terpusat.",
+    "DungeonOS kini v1.1.0. Mentri King Mouse masih dicari. Dia selalu satu langkah di depan — dan satu lorong di bawah."
   ] }
 ];
 
@@ -253,40 +312,6 @@ const GALLERY = [
   { icon: "memeFlask", c: "Anomali: DevConsole muncul kalau kamu tepuk layar 5 kali (jangan tanya kenapa)." }
 ];
 
-// Sindiran pemerintahan & protes (aliran komedi/sarkas), dibalut dunia dungeon
-// agar hidup & lucu tanpa menyasar pihak nyata. Setidaknya 25.
-export const MEMES = [
-  "Harga platinum naik dari 12 gold jadi 18 gold? Gold inflasi? Orang dungeon kan gak pakai platinum!",
-  "Dihina-hina saya diam, dicaci maki saya masih diam, tapi di DungeonUnion ini saya katakan: SAYA AKAN LAWAN!",
-  "Ngebuntal ni orang.",
-  "Yang bikin minion kelaparan siapa? Bukan HQ. Pasti hero.",
-  "Saya minta manajer bicara pakai hati, bukan pakai angka morale.",
-  "Gaji ke-13? Di dungeon gaji ke-1 aja sering telat.",
-  "Amanlah, aman. Trap sudah diatur. Yang kejebak cuma hero.",
-  "Tidak ada niat jahat. Kami cuma lupa bayar gaji 3 bulan.",
-  "Subsidi bawang dicabut demi stabilisasi… stabilisasi brankas HQ.",
-  "Rakyat dungeon butuh bukan janji, tapi gold. Eh, dua-duanya nggak ada.",
-  "Saya dipilih oleh minion untuk memimpin. Mereka terpaksa.",
-  "BLT = Bantuan Langsung Trap. Gratis, tapi nyawamu yang bayar.",
-  "Impor minion? Gak usah, kami ekspor trauma.",
-  "Pajak dungeon naik, tapi lorong tetap gelap. Minimal gelapnya merata.",
-  "Menteri Pertahanan tidur saat hero menyerang. Katanya lagi 'standby mode'.",
-  "Ampun bang jago, jangan dipotong gajinya lagi.",
-  "Tuhan baru aja kasih aku kesempatan jadi bos. Besoknya kena audit.",
-  "Omong kosong? Itu KPI departemen HQ.",
-  "Yang penting viral, bukan beres. Reputasi naik, morale turun.",
-  "Demo minion dibubarkan alasan 'lorong lagi diperbaiki'.",
-  "Infrastruktur dungeon 0%? Tenang, proposalnya 100%.",
-  "Presiden dungeon: 'Saya merasakan yang kalian rasakan.' Padahal dia di menara bawang.",
-  "Dana desa hilang? Mungkin jadi pupuk bawang.",
-  "Lockdown lorong utara demi kesehatan. Brankas HQ tetap buka.",
-  "Reformasi birokrasi: dari lambat jadi sangat lambat, tapi senyum.",
-  "Copot menteri? Di dungeon kami copot gaji minion.",
-  "Stabilitas 100% tercapai saat semua minion diam (dan trauma).",
-  "Realisasi APBD dungeon 12%. Sisanya buat 'pengamanan brankas'.",
-  "Vaksin hero? Yang bayar aja yang dapat. Yang gratis kena trap.",
-  "Saya bukan anti-kritik, saya anti-minion yang ingat gajinya."
-];
 function randomMeme() {
   return MEMES[Math.floor(Math.random() * MEMES.length)];
 }
@@ -811,7 +836,18 @@ const APP_VIEWS = {
     };
   },
 
-  patchnote() {
+  patchnote(s) {
+    const museum = (s && s.flags && s.flags.museum) || [];
+    const museumHtml = museum.length ? `
+      <div class="patch warn">
+        <div class="patch-head"><span class="patch-ver">MUSEUM</span><span class="patch-date">${museum.length} arsip</span></div>
+        <div class="patch-title">Museum Perusahaan</div>
+        <ul class="patch-items">
+          <li>Save era pra-v1.0 direset total sesuai keputusan direksi. Jejaknya diarsipkan di sini.</li>
+          ${museum.map(m => `<li>Hari ${m.day} · kas akhir ${m.gold ?? 0}g — ${m.endingTitle ? `ditutup lewat "${m.endingTitle}"` : "ditutup tanpa ending (drama bebas)"}.</li>`).join("")}
+          <li>Mentri King Mouse? Belum ketemu. Kasus masih dibuka.</li>
+        </ul>
+      </div>` : "";
     const list = PATCHES.map((p, i) => `
       <div class="patch ${i === PATCHES.length - 1 ? "latest" : ""} ${p.warn ? "warn" : ""}">
         <div class="patch-head"><span class="patch-ver">${p.ver}</span><span class="patch-date">${p.date}</span></div>
@@ -823,6 +859,7 @@ const APP_VIEWS = {
       readOnly: true,
       body: `
         <p class="app-lead">Riwayat rilis DungeonOS. Dari purba sampai sekarang — biar kamu tahu seberapa jauh kita sudah merusak... eh, menyempurnakan.</p>
+        ${museumHtml}
         <div class="patch-list">${list}</div>`
     };
   },
@@ -1256,26 +1293,6 @@ export function renderApp(screen, state, handlers) {
     return;
   }
 
-  // DungeonHub ditutup sementara (gimmik transisi ke v1).
-  if (app && app.id === "dungeonhub") {
-    screen.innerHTML = `
-      <div class="app-screen">
-        <div class="topbar">
-          <button class="ghost-btn" data-back>${icon("back")} Beranda</button>
-          <div class="app-title" style="color:${appAccent}">${icon(app ? app.icon : "settings")} ${appName}</div>
-        </div>
-        <div class="app-desc">${appDesc}</div>
-        <div class="hub-closed">
-          <div class="hub-closed-badge">⚠ DITUTUP SEMENTARA</div>
-          <p class="hub-closed-msg">Aplikasi DungeonHub sedang ditutup untuk sementara waktu.</p>
-          <div class="hub-closed-quote">Uangnya di bawa mentri king mouse semua. Mohon maaf atas ketidaknyamanannya karena kami sedang mencari keberadaan Mentri king mouse</div>
-        </div>
-      </div>`;
-    const back = screen.querySelector("[data-back]");
-    if (back) back.addEventListener("click", () => handlers.back());
-    return;
-  }
-
   const getView = (id) => (NEW_VIEWS && NEW_VIEWS[id]) || (APP_VIEWS && APP_VIEWS[id]);
   const view = app && getView(app.id) ? getView(app.id)(state) : null;
   const content = view ? view.body : `<div class="placeholder">Modul <strong>${appName}</strong> belum dibangun.</div>`;
@@ -1312,6 +1329,7 @@ export function renderApp(screen, state, handlers) {
       ${blocked ? `<div class="limit-note">🚫 Batas harian 5 aksi tercapai. Buka <b>DungeonFeed</b> untuk lanjut ke hari baru.</div>` : ""}
     </div>`;
 
+  bindLiveGold(screen);
   screen.querySelector("[data-back]").addEventListener("click", () => handlers.back());
 
   if (view && view.meta) {

@@ -4,6 +4,7 @@ import { icon, avatar } from "./icons.js";
 import { staggerIn, moBurst, syncPerf } from "./anim.js";
 import { Lib, Sound } from "../lib.js";
 import { triggerGlitch } from "./glitch.js";
+import { liveGoldHtml, bindLiveGold } from "./kit/live.js";
 
 let lastAnomaly = 0;
 let homeClockTimer = null;
@@ -131,7 +132,7 @@ export function renderHome(screen, state, handlers) {
           ${statPill("Morale", state.stats.morale, state.stats.morale < 35 ? "bad" : "")}
           ${statPill("Stabil", state.stats.stability, state.stats.stability < 35 ? "bad" : "")}
           ${statPill("Reput", state.stats.reputation, state.stats.reputation < 20 ? "bad" : "")}
-          ${statPill("Gold", state.stats.gold, state.stats.gold < 100 ? "bad" : "")}
+          ${statPill("Gold", liveGoldHtml(), state.stats.gold < 100 ? "bad" : "")}
           ${statPill("Serikat", state.stats.unionPower, state.stats.unionPower > 55 ? "bad" : "")}
         </div>
         <div class="hud-line">${hudLine(state)}</div>
@@ -157,9 +158,11 @@ export function renderHome(screen, state, handlers) {
         <div class="notif-panel glass">${notifs}</div>
       </section>
 
-      <footer class="home-footer">DUNGEONOS v0.3.0 — EVIL MANAGEMENT SUITE</footer>
+      <footer class="home-footer">DUNGEONOS v1.1.0 — BOSS SEJATI · APP RENEWAL</footer>
     </div>
   `;
+
+  bindLiveGold(screen);
 
   screen.querySelectorAll(".app-tile button").forEach(b => {
     b.addEventListener("click", () => {

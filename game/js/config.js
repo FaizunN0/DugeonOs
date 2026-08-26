@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
   title: "DungeonOS: Boss, Kami Mau Mogok!",
-  version: "0.3.0",
+  version: "1.1.0",
   maxDay: 10,
   phases: ["morning", "afternoon", "night"],
   saveSlots: 3,
@@ -57,7 +57,7 @@ export const APPS = [
     name: "TrapMart",
     icon: "trapmart",
     accent: "#FFB23E",
-    description: "TrapMart: ruang kendali jebakan. Pasang, upgrade, auto-defense.",
+    description: "E-commerce pertahanan: katalog + keranjang + review bintang lima palsu. Stok masuk gudang BangunRuang.",
     defaultUnlocked: true,
     core: true,
     hidden: false
@@ -104,7 +104,7 @@ export const APPS = [
     name: "RuneForge",
     icon: "physics",
     accent: "#22D3EE",
-    description: "Forge fisika: mainin rune & bola dengan gravitasi nyata (Matter.js).",
+    description: "Bengkel Rune: tempa bahan drop raid jadi artefak berbuff nyata. Gagal? Meledak.",
     defaultUnlocked: true,
     hidden: false
   },
@@ -167,7 +167,7 @@ export const APPS = [
     name: "Toko Oren",
     icon: "cart",
     accent: "#FF7A1A",
-    description: "Toko Oren — marketplace dungeon. Harga murah? Waspadalah, 50% barang murahan rusak/tidak sesuai.",
+    description: "Diskon gila-gilaan! Garansi 3 detik. Risiko rusak ditampilkan jujur — beli = setuju.",
     defaultUnlocked: true,
     hidden: false
   },
@@ -188,6 +188,26 @@ export const APPS = [
     description: "Super-app dungeon: Ride, Food, Mart & Pay. Kamu yang atur, mereka yang bayar.",
     defaultUnlocked: true,
     core: true,
+    hidden: false
+  },
+  {
+    id: "dungeonbuild",
+    name: "BangunRuang",
+    icon: "trapmart",
+    accent: "#7CFFB2",
+    description: "Susun lorong & tanam trap. Uji pertahanan sebelum hero datang beneran.",
+    defaultUnlocked: true,
+    core: false,
+    hidden: false
+  },
+  {
+    id: "merger",
+    name: "Merger & Akuisisi",
+    icon: "coin",
+    accent: "#FFD86B",
+    description: "Jual dungeon, tukar jadi Saham, mulai baru dengan perk permanen. Font kontrak kecil tapi sah.",
+    defaultUnlocked: true,
+    core: false,
     hidden: false
   },
   {

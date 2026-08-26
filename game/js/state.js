@@ -1,5 +1,11 @@
 import { GAME_CONFIG, APPS } from "./config.js";
 import { saveGame, loadGame } from "./save.js";
+import { emit } from "./core/eventBus.js";
+import { TRAITS } from "./content/minions.js";
+
+// Skema save (kesepakatan DungeonOS v1.0). Naikkan tiap breaking change.
+export const SCHEMA_VERSION = 10;
+const RESET_BELOW = 2; // hanya pra-v2 yang di-reset total ke Museum Perusahaan.
 
 let state = null;
 
@@ -127,7 +133,13 @@ export function mutate(fn) {
     throw new Error("Game state belum diinisialisasi.");
   }
 
+  // Gold live-time: satu titik choke mendeteksi perubahan dompet global.
+  const beforeGold = state.stats ? state.stats.gold : null;
   fn(state);
+  const afterGold = state.stats ? state.stats.gold : null;
+  if (beforeGold !== afterGold) {
+    emit("gold:changed", { gold: afterGold, delta: (afterGold || 0) - (beforeGold || 0) });
+  }
   persist();
 }
 
@@ -192,6 +204,23 @@ export function initGame() {
 // Bawa save lama ke struktur terbaru: app baru wajib terbuka default,
 // dan field yang belum ada diisi dengan nilai default.
 function migrate(s) {
+  // v1.0 Fase 0: save lama (pra-skema v2) diarsipkan ke Museum Perusahaan, lalu reset total.
+  const legacy = !s.schemaVersion || s.schemaVersion < RESET_BELOW;
+  if (legacy) {
+    const m = (s.flags && Array.isArray(s.flags.museum)) ? s.flags.museum : [];
+    m.push({
+      archivedAt: new Date().toISOString(),
+      day: s.day || 1,
+      gold: (s.stats && s.stats.gold) || 0,
+      endingTitle: (s.currentEnding && s.currentEnding.title) || null,
+      note: "Laporan penutupan perusahaan lama. Mentri King Mouse masih dicari."
+    });
+    const fresh = createInitialGameState();
+    fresh.flags.museum = m;
+    for (const k of Object.keys(s)) delete s[k];
+    Object.assign(s, fresh);
+  }
+  s.schemaVersion = SCHEMA_VERSION;
   if (!s.apps || typeof s.apps !== "object") s.apps = {};
   for (const app of APPS) {
     if (typeof s.apps[app.id] !== "boolean") {
@@ -238,6 +267,54 @@ function migrate(s) {
   if (!s.unions) s.unions = {};
   if (!s.story) s.story = { currentNode: "intro", finished: false };
   if (!s.factions || typeof s.factions !== "object") s.factions = { hq: 50, serikat: 50, hero: 50, grem: 50 };
+  // Fase 1: lapisan simulasi operasional.
+  if (!s.sim || typeof s.sim !== "object") s.sim = { day: 1, phaseIdx: 0 };
+  if (!s.economy || typeof s.economy !== "object") s.economy = { incomeToday: 0, expenseToday: 0, reports: [], unpaidStreak: 0 };
+  if (s.economy.unpaidStreak == null) s.economy.unpaidStreak = 0;
+  // Fase 3: campaign bab & flag naratif v1.
+  if (!s.campaign || !Array.isArray(s.campaign.done)) s.campaign = { done: [] };
+  // Rebalance Fase 3.5: gaji tersimpan di roster lama disinkronkan ke tabel trait baru.
+  for (const m of (s.minionsCorp && s.minionsCorp.hired) || []) {
+    if (m.trait !== "legendaris") m.salary = (TRAITS[m.trait] || { salary: m.salary }).salary;
+    if (m.joined == null) m.joined = (s.sim && s.sim.day) || 1;
+  }
+  if (!s.codexKills || typeof s.codexKills !== "object") s.codexKills = {};
+  // Fase 4: meta prestige (merger, saham, perk) — bertahan lintas merger.
+  if (!s.meta || typeof s.meta !== "object") s.meta = { mergers: 0, saham: 0, perks: {} };
+  if (!s.meta.perks || typeof s.meta.perks !== "object") s.meta.perks = {};
+  // APP RENEWAL v1.1: flappy v2 & runeForge.
+  if (!s.flappy || typeof s.flappy !== "object") s.flappy = { best: 0 };
+  if (s.flappy.total == null) s.flappy.total = 0;
+  if (!s.flappy.medals || typeof s.flappy.medals !== "object") s.flappy.medals = { bronze: 0, silver: 0, gold: 0 };
+  if (!s.runeForge || typeof s.runeForge !== "object") s.runeForge = { active: [], forged: 0, failed: 0 };
+  if (!Array.isArray(s.runeForge.active)) s.runeForge.active = [];
+  // APP RENEWAL W3: feed sosial & statistik interogasi.
+  if (!Array.isArray(s.socialFeed)) s.socialFeed = [];
+  if (!s.heroalert || typeof s.heroalert !== "object") s.heroalert = { level: 2 };
+  if (s.heroalert.wins == null) s.heroalert.wins = 0;
+  if (s.heroalert.cases == null) s.heroalert.cases = 0;
+  if (!s.minionsCorp || !Array.isArray(s.minionsCorp.hired)) {
+    const legacyMinions = (s.hub && Array.isArray(s.hub.minions)) ? s.hub.minions : [];
+    s.minionsCorp = {
+      hired: legacyMinions.map((m, i) => ({
+        id: "w" + (i + 1),
+        name: m.name || "Anon" + i,
+        trait: m.trait || "rajin",
+        salary: (TRAITS[m.trait] || { salary: 15 }).salary,
+        stamina: m.stamina == null ? 100 : m.stamina,
+        morale: m.morale == null ? 80 : m.morale,
+        job: "nganggur", resting: false, mogok: false
+      })),
+      candidates: [], seq: 100
+    };
+  }
+  if (!Array.isArray(s.minionsCorp.candidates)) s.minionsCorp.candidates = [];
+  if (!s.minionsCorp.seq) s.minionsCorp.seq = 100;
+  // Fase 2: dungeon builder (grid lorong + trap).
+  if (!s.dungeonBuild || typeof s.dungeonBuild !== "object") s.dungeonBuild = { traps: {}, seq: 1 };
+  if (!s.dungeonBuild.traps || typeof s.dungeonBuild.traps !== "object") s.dungeonBuild.traps = {};
+  if (!Array.isArray(s.flags.museum)) s.flags.museum = [];
+  if (legacy) persist();
 }
 
 export function startNewGame() {
@@ -258,6 +335,7 @@ export function setEnding(ending) {
     s.screen = "ending";
     s.story.finished = true;
   });
+  emit("ending:reached", ending ? ending.id : null);
 }
 
 export function getEnding() {

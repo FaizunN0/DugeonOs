@@ -5,6 +5,7 @@ import { renderHome } from "./ui/homeScreen.js";
 import { renderApp } from "./ui/appScreen.js";
 import { renderEnding } from "./ui/endingScreen.js";
 import { ensureStarted } from "./engine.js";
+import { startSim } from "./systems/sim.js";
 import { enterScreen } from "./ui/anim.js";
 import { Lib, Sound } from "./lib.js";
 
@@ -244,5 +245,6 @@ initPixiSigil();
 initAudioGesture();
 initGame();
 ensureStarted();
+startSim();
 render();
 window.__DUNGEON_READY__ = true;

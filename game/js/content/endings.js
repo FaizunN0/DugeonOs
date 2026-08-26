@@ -439,6 +439,59 @@ export const ENDINGS = [
       "Minion berdiri di depan mejamu, tersenyum lelah: 'Kami bukan NPC, bos.' Lalu mereka buka serikat resmi.",
       "Kau kalah — tapi kali ini kalahnya adil. Istirahatkan minionmu. Game over (untuk hari ini)."
     ]
+  },
+  {
+    id: "v1_bankrut",
+    tone: "unik",
+    title: "Ending 💸: Pailit dengan Martabat (Nol Martabat)",
+    tag: "Ending v1.0 — gagal bayar gaji tiga hari berturut",
+    body: [
+      "Tiga hari operasional beruntun, kas nol dan gaji hangus. Spanduk serikat kini sepanjang lorong: 'INGET BOS, KAMI JUGA INGET'.",
+      "HQ menelpon untuk terakhir kalinya: 'Kami sulit menjelaskan ini ke investor.' Investor-nya satu: Grem. Dia cuma ketawa.",
+      "Brankas dibuka di depan notaris. Isinya: dua koin, selembar janji, dan debu.",
+      "Kamu resmi pailit — tapi dengan senyuman, karena akhirnya libur."
+    ]
+  },
+  {
+    id: "v1_republik_minion",
+    tone: "unik",
+    title: "Ending 🪧: Republik Minion Berdiri",
+    tag: "Ending v1.0 — seluruh pegawai mogok bersamaan",
+    body: [
+      "Hari itu tidak ada yang menyalakan dapur, tidak ada ojek naga lewat, gudang dikunci dari dalam.",
+      "Di pelataran, minion berdiri rapat membentuk barisan. Di tengah mereka, bendera baru berkibar: gambar bawang dan palu.",
+      "'Perusahaan tetap jalan,' kata mereka, 'tapi bosnya kita ganti. Hasil pemungutan suara: kamu satu-satunya yang menolak.'",
+      "Republik Minion proklamasi. Kamu diberi jabatan kehormatan: Penjaga Gudang, shift malam."
+    ]
+  },
+  {
+    id: "v1_mkm_karyawan",
+    tone: "nested-twist",
+    title: "Ending 🐭👑: Mentri King Mouse Ditemukan — Dia Apply Kerja",
+    tag: "RAHASIA v1.0 — rekrut kandidat misterius HRD",
+    body: [
+      "Bertahun dicari, satuan kerja dibubarkan, posko-posko dibentuk. Dan dia mendaftar lewat form HRD biasa. Nama lengkap: M. King Mouse. Ekspektasi gaji: ya.",
+      "Twist satu: uang yang hilang tidak pernah dia bawa. Dia menyimpannya DI DALAM brankasmu sendiri — rak paling belakang, di balik arsip 2019.",
+      "Twist dua: dia apply bukan untuk kabur. Dia apply karena penasaran siapa orang yang berani mengelola dungeon tanpa modal.",
+      "Twist tiga: di hari ketiga ia bekerja, produktivitas naik 300%. Dia bilang, 'Saya kenal seluk-beluk sistem.' Sistem mana? Semua.",
+      "HQ mempromosikanmu karena 'berhasil merekrut legenda'. Padahal kamu cuma klik Wawancara.",
+      "— TRUE ENDING RAHASIA v1.0 —"
+    ]
+  },
+  {
+    id: "raja_burung",
+    tone: "nested-twist",
+    title: "Ending 👑🐦: Raja Burung",
+    tag: "Flappy 'Terbang Lorong' — raih 500 poin",
+    body: [
+      "Lima ratus pilar lorong. Satu kenari berseragam serikat. Sejarah mencatat namamu sebagai pelatih — tapi dunia hanya menyebut burungmu satu kata: RAJA.",
+      "Dungeon Airlines berdiri di atas lorong bekas. Rute perdana: Brankas → Atap, tanpa transit, tanpa bawang di kabin.",
+      "Twist satu: sang raja menuntut gaji ke-13. HQ menolak dengan alasan 'burung tidak punya NPWP'. Esoknya seluruh armada mogok melayang di depan jendela ruang rapat.",
+      "Twist dua: burung itu membeli dungeonmu tunai — dengan tabungan biji emas. Notarisnya burung hantu. Sah-sah, bersaksi pula tiga kelelawar.",
+      "Kamu dipertahankan sebagai Manajer Pakan Shift Malam. Gaji: biji. Tunjangan: biji. Loyalitas: diragukan.",
+      "Kamu melatih seorang raja. Dan raja itu tahu persis siapa yang dulu mengetuk layar setiap hari.",
+      "— ENDING RAJA BURUNG —"
+    ]
   }
 ];
 
@@ -520,3 +573,12 @@ function resolve(id, state) {
     body: body.concat(epilogLine(state))
   };
 }
+
+// Ending v1.0 (dipicu sistem simulasi, bukan cerita VN).
+export const V1_ENDINGS = {
+  bankrut: ENDINGS.find(e => e.id === "v1_bankrut"),
+  republik: ENDINGS.find(e => e.id === "v1_republik_minion"),
+  mkm: ENDINGS.find(e => e.id === "v1_mkm_karyawan")
+};
+
+export const FLAPPY_ENDING = ENDINGS.find(e => e.id === "raja_burung");
